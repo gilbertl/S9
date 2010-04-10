@@ -18,7 +18,7 @@
 */
 -->
 
-<com.gilbertl.s9.LatinKeyboardView
+<com.gilbertl.s9.S9KeyboardView
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/keyboard"
         android:layout_alignParentBottom="true"

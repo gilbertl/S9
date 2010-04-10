@@ -22,15 +22,15 @@ import android.content.res.XmlResourceParser;
 import android.inputmethodservice.Keyboard;
 import android.view.inputmethod.EditorInfo;
 
-public class LatinKeyboard extends Keyboard {
+public class S9Keyboard extends Keyboard {
 
     private Key mEnterKey;
     
-    public LatinKeyboard(Context context, int xmlLayoutResId) {
+    public S9Keyboard(Context context, int xmlLayoutResId) {
         super(context, xmlLayoutResId);
     }
 
-    public LatinKeyboard(Context context, int layoutTemplateResId, 
+    public S9Keyboard(Context context, int layoutTemplateResId, 
             CharSequence characters, int columns, int horizontalPadding) {
         super(context, layoutTemplateResId, characters, columns, horizontalPadding);
     }

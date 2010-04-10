@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" 
         package="com.gilbertl.s9">
     <application android:label="@string/ime_name">
-        <service android:name="SoftKeyboard"
+        <service android:name="S9InputMethodService"
                 android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
