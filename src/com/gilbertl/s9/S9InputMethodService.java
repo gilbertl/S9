@@ -17,11 +17,13 @@
 package com.gilbertl.s9;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.inputmethodservice.Keyboard.Key;
 import android.text.method.MetaKeyKeyListener;
 import android.util.Log;
 import android.view.KeyCharacterMap;
@@ -31,6 +33,7 @@ import android.view.View;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.widget.RemoteViews.ActionException;
 
 public class S9InputMethodService extends InputMethodService 
         implements KeyboardView.OnKeyboardActionListener, View.OnTouchListener {
@@ -66,6 +69,8 @@ public class S9InputMethodService extends InputMethodService
     
     private String mWordSeparators;
     
+    private List<SwipeMotion> mSwipeMotions;
+    
     /**
      * Main initialization of the input method component.  Be sure to call
      * to super class.
@@ -98,6 +103,8 @@ public class S9InputMethodService extends InputMethodService
      * a configuration change.
      */
     @Override public View onCreateInputView() {
+    	mSwipeMotions = new LinkedList<SwipeMotion>();
+    	
         mInputView = (KeyboardView) getLayoutInflater().inflate(
                 R.layout.input, null);
         mInputView.setOnKeyboardActionListener(this);
@@ -650,37 +657,70 @@ public class S9InputMethodService extends InputMethodService
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
-		/*
-		if (me.getAction() == MotionEvent.ACTION_DOWN) {
-    		Log.i(TAG, "down action" + me.toString());
-    		lastActionDown = MotionEvent.obtain(me);	// clones
-    	} else if (me.getAction() == MotionEvent.ACTION_UP) {
-    		assert(lastActionDown != null);
-    		Log.i(TAG, "last down action: " + lastActionDown.toString());
-    		Keyboard kb = getKeyboard();
-    		List<Key> kbKeys = kb.getKeys();
-    		Key keyPressed = null;
-    		for (Key k : kbKeys) {
-    			if (k.isInside((int) lastActionDown.getX(), (int) lastActionDown.getY())) {
-    				keyPressed = k;
-    				break;
-    			}
-    		}
-    		assert(keyPressed != null);
-    		int code = (char) keyPressed.codes[0];
-    		Log.i(TAG, "Swipe on key: " + (char) code);
-    		char key = (char)
-    			(me.getX() > lastActionDown.getX()? code + 1 : code - 1);
-    		InputMethodService ims = (InputMethodService) getOnKeyboardActionListener();
-    		String text = Character.toString(key);
-    		ims.getCurrentInputConnection().commitText(text, 1);
-    		Log.i(TAG, "Commited text: " + text);
-    		lastActionDown = null;
-    	} else {
-	    	Log.i(TAG, me.toString());
-    	}
-    	*/
+		switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+				mSwipeMotions.add(new SwipeMotion(MotionEvent.obtain(event)));
+				return true;
+			case MotionEvent.ACTION_MOVE:
+				assert(mSwipeMotions.size() != 0);
+				closestSwipeMotion(event).setLastMotion(event);
+				return true;
+			case MotionEvent.ACTION_UP:
+				SwipeMotion sm = closestSwipeMotion(event);
+				assert(sm != null);
+				mSwipeMotions.remove(sm);
+				sm.setUpMotion(event);
+				assert(sm.getUpMotion() != null);
+				
+	    		Key keyPressed = null;
+	    		for (Key key : mCurKeyboard.getKeys()) {
+	    			if (key.isInside((int) sm.getDownMotion().getX(),
+	    					(int) sm.getDownMotion().getY())) {
+	    				keyPressed = key;
+	    				break;
+	    			}
+	    		}
+	    		if (keyPressed != null) {
+	    			float threshold = 1.0f;
+	    			char character = (char) keyPressed.codes[0];
+		    		Log.i(TAG, "Swipe on key: " + character);
+	    			float xDiff = sm.getDownMotion().getX() - sm.getUpMotion().getX();
+	    			if (Math.abs(xDiff) > threshold) {
+	    				character = (char) (xDiff > 0? keyPressed.codes[4] : keyPressed.codes[2]); 
+	    			}
+		    		String text = Character.toString(character);
+		    		// TODO: don't commit text directly
+		    		getCurrentInputConnection().commitText(text, 1);
+		    		Log.i(TAG, "Commited text: " + text);
+	    		}
+	    		return true;
+			default:
+				Log.i(TAG, "ACTION_OTHER");
+				return false;
+		}
+	}
+	
+	private double distanceSquared(MotionEvent me1, MotionEvent me2) {
+		float xDiff = me1.getX() - me2.getX();
+		float yDiff = me1.getY() - me2.getY();
 		
-		return false;
+		return xDiff * xDiff + yDiff * yDiff;
+	}
+	
+	private SwipeMotion closestSwipeMotion(MotionEvent me) {
+		int size = mSwipeMotions.size();
+		if (size == 0) {
+			return null;
+		}
+		
+		SwipeMotion closestSM = mSwipeMotions.get(0);
+		for (int i = 1; i < size; i++) {
+			if (distanceSquared(me, mSwipeMotions.get(i).getLastMotion())
+					< distanceSquared(me, closestSM.getLastMotion())) {
+				closestSM = mSwipeMotions.get(i);
+			}
+		}
+		
+		return closestSM;
 	}
 }

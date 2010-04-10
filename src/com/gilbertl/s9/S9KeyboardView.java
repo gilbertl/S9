@@ -15,6 +15,10 @@ public class S9KeyboardView extends KeyboardView {
 
     private View.OnTouchListener onTouchListener;
 
+    public S9KeyboardView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+    
     public S9KeyboardView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
