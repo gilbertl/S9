@@ -686,6 +686,7 @@ public class S9InputMethodService extends InputMethodService
 		    		Log.i(TAG, "Swipe on key: " + character);
 	    			float xDiff = sm.getDownMotion().getX() - sm.getUpMotion().getX();
 	    			if (Math.abs(xDiff) > threshold) {
+	    				// TODO: store only 1 code for each key
 	    				character = (char) (xDiff > 0? keyPressed.codes[4] : keyPressed.codes[2]); 
 	    			}
 		    		String text = Character.toString(character);
