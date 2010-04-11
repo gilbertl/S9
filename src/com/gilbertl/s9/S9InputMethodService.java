@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
@@ -69,7 +71,8 @@ public class S9InputMethodService extends InputMethodService
     
     private String mWordSeparators;
     
-    private List<SwipeMotion> mSwipeMotions;
+	// down actions indexed by motion event pointer ids
+	private PointF[] mDownPoints;
     
     /**
      * Main initialization of the input method component.  Be sure to call
@@ -103,7 +106,9 @@ public class S9InputMethodService extends InputMethodService
      * a configuration change.
      */
     @Override public View onCreateInputView() {
-    	mSwipeMotions = new LinkedList<SwipeMotion>();
+    	mDownPoints = new PointF[10];
+    	// if someone manages to put more than 10 fingers on an Android device
+    	// then they deserve to get some crazy force quit message
     	
         mInputView = (KeyboardView) getLayoutInflater().inflate(
                 R.layout.input, null);
@@ -657,71 +662,99 @@ public class S9InputMethodService extends InputMethodService
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
-		switch (event.getAction()) {
+		int action = event.getAction();
+		int actionCode= action & MotionEvent.ACTION_MASK;
+		int pointerId = -1;
+		int pointerIdx = -1;
+		
+		dumpEvent(event);
+		
+		switch (actionCode) {
 			case MotionEvent.ACTION_DOWN:
-				mSwipeMotions.add(new SwipeMotion(MotionEvent.obtain(event)));
-				return true;
-			case MotionEvent.ACTION_MOVE:
-				assert(mSwipeMotions.size() != 0);
-				closestSwipeMotion(event).setLastMotion(event);
+			case MotionEvent.ACTION_UP:
+				assert event.getPointerCount() == 1;
+				pointerIdx = 0;
+				pointerId = event.getPointerId(pointerIdx);
+				break;
+			case MotionEvent.ACTION_POINTER_DOWN:
+			case MotionEvent.ACTION_POINTER_UP:
+				pointerId = action >> MotionEvent.ACTION_POINTER_ID_SHIFT;
+				pointerIdx = event.findPointerIndex(pointerId);
+				break;
+			default:
+				return false;
+		}
+		
+		if (pointerId == -1 && pointerIdx == -1) {
+			// not going to handle any non-down/up touches
+			return false;
+		}
+		
+		switch (actionCode) {
+			case MotionEvent.ACTION_DOWN:
+			case MotionEvent.ACTION_POINTER_DOWN:
+				Log.i(TAG, String.format("Point %d got pressed down", pointerId));
+				assert mDownPoints[pointerId] == null;
+				mDownPoints[pointerId] = new PointF(
+						event.getX(pointerIdx), event.getY(pointerIdx));
 				return true;
 			case MotionEvent.ACTION_UP:
-				SwipeMotion sm = closestSwipeMotion(event);
-				assert(sm != null);
-				mSwipeMotions.remove(sm);
-				sm.setUpMotion(event);
-				assert(sm.getUpMotion() != null);
+			case MotionEvent.ACTION_POINTER_UP:
+				Log.i(TAG, String.format("Point %d got released", pointerId));
+				assert mDownPoints[pointerId] != null;
+				PointF downPoint = mDownPoints[pointerId];
+				mDownPoints[pointerId] = null;
+				PointF upPoint = new PointF(
+						event.getX(pointerIdx), event.getY(pointerIdx));
 				
 	    		Key keyPressed = null;
 	    		for (Key key : mCurKeyboard.getKeys()) {
-	    			if (key.isInside((int) sm.getDownMotion().getX(),
-	    					(int) sm.getDownMotion().getY())) {
+	    			if (key.isInside((int) downPoint.x, (int) downPoint.y)) {
 	    				keyPressed = key;
 	    				break;
 	    			}
 	    		}
 	    		if (keyPressed != null) {
-	    			float threshold = 1.0f;
+	    			float threshold = 3.0f;
 	    			char character = (char) keyPressed.codes[0];
 		    		Log.i(TAG, "Swipe on key: " + character);
-	    			float xDiff = sm.getDownMotion().getX() - sm.getUpMotion().getX();
+	    			float xDiff = downPoint.x - upPoint.x;
 	    			if (Math.abs(xDiff) > threshold) {
-	    				// TODO: store only 1 code for each key
 	    				character = (char) (xDiff > 0? keyPressed.codes[4] : keyPressed.codes[2]); 
 	    			}
 		    		String text = Character.toString(character);
-		    		// TODO: don't commit text directly
 		    		getCurrentInputConnection().commitText(text, 1);
 		    		Log.i(TAG, "Commited text: " + text);
 	    		}
 	    		return true;
 			default:
-				Log.i(TAG, "ACTION_OTHER");
 				return false;
 		}
 	}
 	
-	private double distanceSquared(MotionEvent me1, MotionEvent me2) {
-		float xDiff = me1.getX() - me2.getX();
-		float yDiff = me1.getY() - me2.getY();
-		
-		return xDiff * xDiff + yDiff * yDiff;
-	}
-	
-	private SwipeMotion closestSwipeMotion(MotionEvent me) {
-		int size = mSwipeMotions.size();
-		if (size == 0) {
-			return null;
+	private void dumpEvent(MotionEvent event) {
+		   String names[] = { "DOWN" , "UP" , "MOVE" , "CANCEL" , "OUTSIDE" ,
+		      "POINTER_DOWN" , "POINTER_UP" , "7?" , "8?" , "9?" };
+		   StringBuilder sb = new StringBuilder();
+		   int action = event.getAction();
+		   int actionCode = action & MotionEvent.ACTION_MASK;
+		   sb.append("event ACTION_" ).append(names[actionCode]);
+		   if (actionCode == MotionEvent.ACTION_POINTER_DOWN
+		         || actionCode == MotionEvent.ACTION_POINTER_UP) {
+		      sb.append("(pid " ).append(
+		      action >> MotionEvent.ACTION_POINTER_ID_SHIFT);
+		      sb.append(")" );
+		   }
+		   sb.append("[" );
+		   for (int i = 0; i < event.getPointerCount(); i++) {
+		      sb.append("#" ).append(i);
+		      sb.append("(pid " ).append(event.getPointerId(i));
+		      sb.append(")=" ).append((int) event.getX(i));
+		      sb.append("," ).append((int) event.getY(i));
+		      if (i + 1 < event.getPointerCount())
+		         sb.append(";" );
+		   }
+		   sb.append("]" );
+		   Log.i(TAG, sb.toString());
 		}
-		
-		SwipeMotion closestSM = mSwipeMotions.get(0);
-		for (int i = 1; i < size; i++) {
-			if (distanceSquared(me, mSwipeMotions.get(i).getLastMotion())
-					< distanceSquared(me, closestSM.getLastMotion())) {
-				closestSM = mSwipeMotions.get(i);
-			}
-		}
-		
-		return closestSM;
-	}
 }
