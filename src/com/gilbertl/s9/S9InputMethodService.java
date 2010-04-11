@@ -17,10 +17,8 @@
 package com.gilbertl.s9;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
@@ -35,7 +33,6 @@ import android.view.View;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
-import android.widget.RemoteViews.ActionException;
 
 public class S9InputMethodService extends InputMethodService 
         implements KeyboardView.OnKeyboardActionListener, View.OnTouchListener {
@@ -109,6 +106,9 @@ public class S9InputMethodService extends InputMethodService
     	mDownPoints = new PointF[10];
     	// if someone manages to put more than 10 fingers on an Android device
     	// then they deserve to get some crazy force quit message
+    	for (int i = 0; i < mDownPoints.length; i++) {
+    		mDownPoints[i] = new PointF(-1, -1);
+    	}
     	
         mInputView = (KeyboardView) getLayoutInflater().inflate(
                 R.layout.input, null);
@@ -660,7 +660,6 @@ public class S9InputMethodService extends InputMethodService
     public void onRelease(int primaryCode) {
     }
 
-	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		int action = event.getAction();
 		int actionCode= action & MotionEvent.ACTION_MASK;
@@ -690,20 +689,19 @@ public class S9InputMethodService extends InputMethodService
 			return false;
 		}
 		
+		PointF downPoint = mDownPoints[pointerId];
 		switch (actionCode) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_POINTER_DOWN:
-				Log.i(TAG, String.format("Point %d got pressed down", pointerId));
-				assert mDownPoints[pointerId] == null;
-				mDownPoints[pointerId] = new PointF(
-						event.getX(pointerIdx), event.getY(pointerIdx));
+				Log.i(TAG,
+						String.format("Point %d got pressed down", pointerId));
+				assert downPoint.x == -1 && downPoint.y == -1;
+				downPoint.set(event.getX(pointerIdx), event.getY(pointerIdx));
 				return true;
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
 				Log.i(TAG, String.format("Point %d got released", pointerId));
-				assert mDownPoints[pointerId] != null;
-				PointF downPoint = mDownPoints[pointerId];
-				mDownPoints[pointerId] = null;
+				assert downPoint.x >= 0 && downPoint.y >= 0;
 				PointF upPoint = new PointF(
 						event.getX(pointerIdx), event.getY(pointerIdx));
 				
@@ -720,12 +718,14 @@ public class S9InputMethodService extends InputMethodService
 		    		Log.i(TAG, "Swipe on key: " + character);
 	    			float xDiff = downPoint.x - upPoint.x;
 	    			if (Math.abs(xDiff) > threshold) {
-	    				character = (char) (xDiff > 0? keyPressed.codes[4] : keyPressed.codes[2]); 
+	    				character = (char)
+	    				(xDiff > 0? keyPressed.codes[4] : keyPressed.codes[2]); 
 	    			}
 		    		String text = Character.toString(character);
 		    		getCurrentInputConnection().commitText(text, 1);
 		    		Log.i(TAG, "Commited text: " + text);
 	    		}
+	    		downPoint.set(-1,-1);
 	    		return true;
 			default:
 				return false;
