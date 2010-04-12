@@ -479,28 +479,6 @@ public class S9InputMethodService extends InputMethodService
     // Implementation of KeyboardViewListener
 
     public void onKey(int primaryCode, int[] keyCodes) {
-        if (isWordSeparator(primaryCode)) {
-            // Handle separator
-            if (mComposing.length() > 0) {
-                commitTyped(getCurrentInputConnection());
-            }
-            sendKey(primaryCode);
-            updateShiftKeyState(getCurrentInputEditorInfo());
-        } else if (primaryCode == Keyboard.KEYCODE_DELETE) {
-            handleBackspace();
-        } else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
-            handleShift();
-        } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
-            handleClose();
-            return;
-        } else if (primaryCode == S9KeyboardView.KEYCODE_OPTIONS) {
-            // Show a menu or somethin'
-        } else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE
-                && mInputView != null) {
-        	assert false;
-        } else {
-            handleCharacter(primaryCode, keyCodes);
-        }
     }
 
     public void onText(CharSequence text) {
@@ -575,7 +553,7 @@ public class S9InputMethodService extends InputMethodService
         }
     }
     
-    private void handleCharacter(int primaryCode, int[] keyCodes) {
+    private void handleCharacter(int primaryCode) {
         if (isInputViewShown()) {
             if (mInputView.isShifted()) {
                 primaryCode = Character.toUpperCase(primaryCode);
@@ -716,15 +694,39 @@ public class S9InputMethodService extends InputMethodService
 		    		Log.i(TAG, "Swipe on key: " + (char) keyPressed.codes[0]);
 		    		int motion =
 		    			S9KeyMotion.calculate(downPoint, upPoint, threshold);
-		    		char character = (char) keyPressed.codes[motion];
-		    		String text = Character.toString(character);
-		    		getCurrentInputConnection().commitText(text, 1);
-		    		Log.i(TAG, "Commited text: " + text);
+		    		Log.i(TAG,
+		    			"Sending key: " + (char) keyPressed.codes[motion]);
+		    		handleKey(keyPressed.codes[motion]);
 	    		}
 	    		downPoint.set(-1,-1);
 	    		return true;
 			default:
 				return false;
 		}
+	}
+	
+	private void handleKey(int code) {
+        if (isWordSeparator(code)) {
+            // Handle separator
+            if (mComposing.length() > 0) {
+                commitTyped(getCurrentInputConnection());
+            }
+            sendKey(code);
+            updateShiftKeyState(getCurrentInputEditorInfo());
+        } else if (code == Keyboard.KEYCODE_DELETE) {
+            handleBackspace();
+        } else if (code == Keyboard.KEYCODE_SHIFT) {
+            handleShift();
+        } else if (code == Keyboard.KEYCODE_CANCEL) {
+            handleClose();
+            return;
+        } else if (code == S9KeyboardView.KEYCODE_OPTIONS) {
+            // Show a menu or somethin'
+        } else if (code == Keyboard.KEYCODE_MODE_CHANGE
+                && mInputView != null) {
+        	assert false;
+        } else {
+            handleCharacter(code);
+        }
 	}
 }
