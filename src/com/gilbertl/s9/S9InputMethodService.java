@@ -667,8 +667,6 @@ public class S9InputMethodService extends InputMethodService
 		int pointerId = -1;
 		int pointerIdx = -1;
 		
-		dumpEvent(event);
-		
 		switch (actionCode) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_UP:
