@@ -234,7 +234,8 @@ public class S9InputMethodService extends InputMethodService
         }
     }
     
-    @Override public void onStartInputView(EditorInfo attribute, boolean restarting) {
+    @Override
+    public void onStartInputView(EditorInfo attribute, boolean restarting) {
         super.onStartInputView(attribute, restarting);
         // Apply the selected keyboard to the input view.
         mInputView.setKeyboard(mCurKeyboard);
@@ -713,14 +714,11 @@ public class S9InputMethodService extends InputMethodService
 	    			}
 	    		}
 	    		if (keyPressed != null) {
-	    			float threshold = 3.0f;
-	    			char character = (char) keyPressed.codes[0];
-		    		Log.i(TAG, "Swipe on key: " + character);
-	    			float xDiff = downPoint.x - upPoint.x;
-	    			if (Math.abs(xDiff) > threshold) {
-	    				character = (char)
-	    				(xDiff > 0? keyPressed.codes[4] : keyPressed.codes[2]); 
-	    			}
+	    			float threshold = 10.0f;
+		    		Log.i(TAG, "Swipe on key: " + (char) keyPressed.codes[0]);
+		    		int motion =
+		    			S9KeyMotion.calculate(downPoint, upPoint, threshold);
+		    		char character = (char) keyPressed.codes[motion];
 		    		String text = Character.toString(character);
 		    		getCurrentInputConnection().commitText(text, 1);
 		    		Log.i(TAG, "Commited text: " + text);
@@ -731,30 +729,4 @@ public class S9InputMethodService extends InputMethodService
 				return false;
 		}
 	}
-	
-	private void dumpEvent(MotionEvent event) {
-		   String names[] = { "DOWN" , "UP" , "MOVE" , "CANCEL" , "OUTSIDE" ,
-		      "POINTER_DOWN" , "POINTER_UP" , "7?" , "8?" , "9?" };
-		   StringBuilder sb = new StringBuilder();
-		   int action = event.getAction();
-		   int actionCode = action & MotionEvent.ACTION_MASK;
-		   sb.append("event ACTION_" ).append(names[actionCode]);
-		   if (actionCode == MotionEvent.ACTION_POINTER_DOWN
-		         || actionCode == MotionEvent.ACTION_POINTER_UP) {
-		      sb.append("(pid " ).append(
-		      action >> MotionEvent.ACTION_POINTER_ID_SHIFT);
-		      sb.append(")" );
-		   }
-		   sb.append("[" );
-		   for (int i = 0; i < event.getPointerCount(); i++) {
-		      sb.append("#" ).append(i);
-		      sb.append("(pid " ).append(event.getPointerId(i));
-		      sb.append(")=" ).append((int) event.getX(i));
-		      sb.append("," ).append((int) event.getY(i));
-		      if (i + 1 < event.getPointerCount())
-		         sb.append(";" );
-		   }
-		   sb.append("]" );
-		   Log.i(TAG, sb.toString());
-		}
 }
