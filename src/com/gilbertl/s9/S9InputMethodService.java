@@ -62,7 +62,8 @@ public class S9InputMethodService extends InputMethodService
     private long mLastShiftTime;
     private long mMetaState;
 
-    private S9Keyboard mKeyboard;
+    private S9Keyboard mDefaultKeyboard;
+    private S9Keyboard mShiftedKeyboard;
     
     private S9Keyboard mCurKeyboard;
     
@@ -85,7 +86,7 @@ public class S9InputMethodService extends InputMethodService
      * is called after creation and any configuration change.
      */
     @Override public void onInitializeInterface() {
-        if (mKeyboard != null) {
+        if (mDefaultKeyboard != null) {
             // Configuration changes can happen after the keyboard gets recreated,
             // so we need to be able to re-build the keyboards if the available
             // space has changed.
@@ -93,7 +94,8 @@ public class S9InputMethodService extends InputMethodService
             if (displayWidth == mLastDisplayWidth) return;
             mLastDisplayWidth = displayWidth;
         }
-        mKeyboard = new S9Keyboard(this, R.xml.qwerty);
+        mDefaultKeyboard = new S9Keyboard(this, R.xml.s9);
+        mShiftedKeyboard = new S9Keyboard(this, R.xml.s9_shifted);
     }
     
     /**
@@ -114,7 +116,7 @@ public class S9InputMethodService extends InputMethodService
                 R.layout.input, null);
         mInputView.setOnKeyboardActionListener(this);
         mInputView.setOnTouchListener(this);
-        mInputView.setKeyboard(mKeyboard);
+        mInputView.setKeyboard(mDefaultKeyboard);
         return mInputView;
     }
 
@@ -162,7 +164,7 @@ public class S9InputMethodService extends InputMethodService
                 // normal alphabetic keyboard, and assume that we should
                 // be doing predictive text (showing candidates as the
                 // user types).
-                mCurKeyboard = mKeyboard;
+                mCurKeyboard = mDefaultKeyboard;
                 mPredictionOn = true;
                 
                 // We now look for a few special variations of text that will
@@ -202,7 +204,7 @@ public class S9InputMethodService extends InputMethodService
             default:
                 // For all unknown input types, default to the alphabetic
                 // keyboard with no special features.
-                mCurKeyboard = mKeyboard;
+                mCurKeyboard = mDefaultKeyboard;
                 updateShiftKeyState(attribute);
         }
         
@@ -228,7 +230,7 @@ public class S9InputMethodService extends InputMethodService
         // its window.
         setCandidatesViewShown(false);
         
-        mCurKeyboard = mKeyboard;
+        mCurKeyboard = mDefaultKeyboard;
         if (mInputView != null) {
             mInputView.closing();
         }
@@ -427,7 +429,7 @@ public class S9InputMethodService extends InputMethodService
      */
     private void updateShiftKeyState(EditorInfo attr) {
         if (attr != null 
-                && mInputView != null && mKeyboard == mInputView.getKeyboard()) {
+                && mInputView != null && mDefaultKeyboard == mInputView.getKeyboard()) {
             int caps = 0;
             EditorInfo ei = getCurrentInputEditorInfo();
             if (ei != null && ei.inputType != EditorInfo.TYPE_NULL) {
@@ -543,14 +545,10 @@ public class S9InputMethodService extends InputMethodService
             return;
         }
         
-        Keyboard currentKeyboard = mInputView.getKeyboard();
-        if (mKeyboard == currentKeyboard) {
-            // Alphabet keyboard
-            checkToggleCapsLock();
-            mInputView.setShifted(mCapsLock || !mInputView.isShifted());
-        } else {
-        	assert false;
-        }
+        mCurKeyboard = mCurKeyboard == mDefaultKeyboard?
+        		mShiftedKeyboard : mDefaultKeyboard;
+        mInputView.setKeyboard(mCurKeyboard);
+        mInputView.setShifted(mCapsLock || !mInputView.isShifted());
     }
     
     private void handleCharacter(int primaryCode) {
@@ -725,6 +723,8 @@ public class S9InputMethodService extends InputMethodService
         } else if (code == Keyboard.KEYCODE_MODE_CHANGE
                 && mInputView != null) {
         	assert false;
+        } else if (code == S9Keyboard.KEYCODE_NULL) {
+        	// do nothing
         } else {
             handleCharacter(code);
         }

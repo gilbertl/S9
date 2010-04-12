@@ -11,8 +11,9 @@
         <Key android:codes="101,49,114,96,119" android:keyLabel="wer"
                 android:keyEdgeFlags="left"/>
         <Key android:codes="121,50,117,45,116" android:keyLabel="tyu"/>
-        <Key android:codes="111,51,112,43,105" android:keyLabel="iop"/>
-        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" 
+        <Key android:codes="111,51,112,61,105" android:keyLabel="iop"/>
+        <Key android:codes="-5,-5,-5,-5,-5"
+                android:keyIcon="@drawable/sym_keyboard_delete" 
                 android:keyWidth="19%p" android:keyEdgeFlags="right"
                 android:isRepeatable="true"/>
     </Row>
@@ -21,27 +22,29 @@
         <Key android:codes="115,52,100,91,97" android:keyLabel="asd"/>
         <Key android:codes="103,53,104,93,102" android:keyLabel="fgh"/>
         <Key android:codes="107,54,108,92,106" android:keyLabel="jkl"/>
-        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" 
-                android:keyWidth="19%p" android:isModifier="true"
-                android:isSticky="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="-999,-999,-999,-999,-999"  android:keyWidth="19%p"
+                android:keyEdgeFlags="right"/>
             
     </Row>
     
     <Row>
         <Key android:codes="122,55,120,59,113" android:keyLabel="qzx"/>
         <Key android:codes="118,56,98,39,99" android:keyLabel="cvb"/>
-        <Key android:codes="109,57,57,47,110" android:keyLabel="nm"/>
-        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" 
+        <Key android:codes="109,57,109,47,110" android:keyLabel="nm"/>
+        <Key android:codes="-1,-1,-1,-1,-1"
+                android:keyIcon="@drawable/sym_keyboard_shift" 
                 android:keyWidth="19%p" android:isModifier="true"
-                android:isSticky="true" android:keyEdgeFlags="left"/>
+                android:isSticky="true" android:keyEdgeFlags="right"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
         <Key android:codes="44,58,34,59,39" android:keyLabel="',&quot;"/>
-        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space" 
+        <Key android:codes="32,32,32,32,32"
+                android:keyIcon="@drawable/sym_keyboard_space" 
                 android:isRepeatable="true"/>
         <Key android:codes="46,64,63,35,33" android:keyLabel="!.?"/>
-        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" 
+        <Key android:codes="10,10,10,10,10"
+                android:keyIcon="@drawable/sym_keyboard_return" 
                 android:keyWidth="20%p" android:keyEdgeFlags="right"/>
     </Row>
     
