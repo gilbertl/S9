@@ -165,7 +165,7 @@ public class S9InputMethodService extends InputMethodService
                 // be doing predictive text (showing candidates as the
                 // user types).
                 mCurKeyboard = mDefaultKeyboard;
-                //mPredictionOn = true;
+                mPredictionOn = true;
                 
                 // We now look for a few special variations of text that will
                 // modify our behavior.
@@ -182,7 +182,8 @@ public class S9InputMethodService extends InputMethodService
                         || variation == EditorInfo.TYPE_TEXT_VARIATION_FILTER) {
                     // Our predictions are not useful for e-mail addresses
                     // or URIs.
-                    mPredictionOn = false;
+                    //mPredictionOn = false;
+                	// it's nice to be able to see what's being typed
                 }
                 
                 if ((attribute.inputType&EditorInfo.TYPE_TEXT_FLAG_AUTO_COMPLETE) != 0) {
@@ -191,7 +192,8 @@ public class S9InputMethodService extends InputMethodService
                     // to supply their own.  We only show the editor's
                     // candidates when in fullscreen mode, otherwise relying
                     // own it displaying its own UI.
-                    mPredictionOn = false;
+                    //mPredictionOn = false;
+                	// it's nice to see what's being typed
                     mCompletionOn = isFullscreenMode();
                 }
                 
