@@ -58,8 +58,6 @@ public class S9InputMethodService extends InputMethodService
     private boolean mPredictionOn;
     private boolean mCompletionOn;
     private int mLastDisplayWidth;
-    private boolean mCapsLock;
-    private long mLastShiftTime;
     private long mMetaState;
 
     private S9Keyboard mDefaultKeyboard;
@@ -96,6 +94,7 @@ public class S9InputMethodService extends InputMethodService
         }
         mDefaultKeyboard = new S9Keyboard(this, R.xml.s9);
         mShiftedKeyboard = new S9Keyboard(this, R.xml.s9_shifted);
+        mShiftedKeyboard.setShifted(true);
     }
     
     /**
@@ -114,6 +113,7 @@ public class S9InputMethodService extends InputMethodService
     	
         mInputView = (KeyboardView) getLayoutInflater().inflate(
                 R.layout.input, null);
+        mInputView.setPreviewEnabled(false);
         mInputView.setOnKeyboardActionListener(this);
         mInputView.setOnTouchListener(this);
         mInputView.setKeyboard(mDefaultKeyboard);
@@ -165,7 +165,7 @@ public class S9InputMethodService extends InputMethodService
                 // be doing predictive text (showing candidates as the
                 // user types).
                 mCurKeyboard = mDefaultKeyboard;
-                mPredictionOn = true;
+                //mPredictionOn = true;
                 
                 // We now look for a few special variations of text that will
                 // modify our behavior.
@@ -210,7 +210,8 @@ public class S9InputMethodService extends InputMethodService
         
         // Update the label on the enter key, depending on what the application
         // says it will do.
-        mCurKeyboard.setImeOptions(getResources(), attribute.imeOptions);
+        mDefaultKeyboard.setImeOptions(getResources(), attribute.imeOptions);
+        mShiftedKeyboard.setImeOptions(getResources(), attribute.imeOptions);
     }
 
     /**
@@ -428,15 +429,30 @@ public class S9InputMethodService extends InputMethodService
      * editor state.
      */
     private void updateShiftKeyState(EditorInfo attr) {
+    	Log.i(TAG, "called updateShiftKeyState");
         if (attr != null 
-                && mInputView != null && mDefaultKeyboard == mInputView.getKeyboard()) {
+                && mInputView != null && mCurKeyboard == mInputView.getKeyboard()) {
             int caps = 0;
             EditorInfo ei = getCurrentInputEditorInfo();
             if (ei != null && ei.inputType != EditorInfo.TYPE_NULL) {
                 caps = getCurrentInputConnection().getCursorCapsMode(attr.inputType);
             }
-            mInputView.setShifted(mCapsLock || caps != 0);
+            useShiftedKeyboard(caps != 0);
         }
+    }
+    
+    private void useShiftedKeyboard(boolean useShifted) {
+    	if (useShifted) {
+	    	mCurKeyboard = mShiftedKeyboard;
+	    	mInputView.setKeyboard(mShiftedKeyboard);
+    	} else {
+    		mCurKeyboard = mDefaultKeyboard;
+    		mInputView.setKeyboard(mDefaultKeyboard);
+    	}
+    }
+    
+    private void toggleKeyboard() {
+    	useShiftedKeyboard(mCurKeyboard == mDefaultKeyboard);
     }
     
     /**
@@ -543,45 +559,26 @@ public class S9InputMethodService extends InputMethodService
     private void handleShift() {
         if (mInputView == null) {
             return;
-        }
-        
-        mCurKeyboard = mCurKeyboard == mDefaultKeyboard?
-        		mShiftedKeyboard : mDefaultKeyboard;
-        mInputView.setKeyboard(mCurKeyboard);
-        mInputView.setShifted(mCapsLock || !mInputView.isShifted());
+        }      
+        toggleKeyboard();
     }
     
     private void handleCharacter(int primaryCode) {
-        if (isInputViewShown()) {
-            if (mInputView.isShifted()) {
-                primaryCode = Character.toUpperCase(primaryCode);
-            }
-        }
         if (isAlphabet(primaryCode) && mPredictionOn) {
             mComposing.append((char) primaryCode);
             getCurrentInputConnection().setComposingText(mComposing, 1);
-            updateShiftKeyState(getCurrentInputEditorInfo());
             updateCandidates();
         } else {
             getCurrentInputConnection().commitText(
                     String.valueOf((char) primaryCode), 1);
         }
+        updateShiftKeyState(getCurrentInputEditorInfo());
     }
 
     private void handleClose() {
         commitTyped(getCurrentInputConnection());
         requestHideSelf(0);
         mInputView.closing();
-    }
-
-    private void checkToggleCapsLock() {
-        long now = System.currentTimeMillis();
-        if (mLastShiftTime + 800 > now) {
-            mCapsLock = !mCapsLock;
-            mLastShiftTime = 0;
-        } else {
-            mLastShiftTime = now;
-        }
     }
     
     private String getWordSeparators() {

@@ -12,7 +12,8 @@
                 android:keyEdgeFlags="left"/>
         <Key android:codes="89,64,85,95,84" android:keyLabel="TYU"/>
         <Key android:codes="79,35,80,43,73" android:keyLabel="IOP"/>
-        <Key android:codes="-5,-5,-5,-5,-5" android:keyIcon="@drawable/sym_keyboard_delete" 
+        <Key android:codes="-5,-5,-5,-5,-5"
+                android:keyIcon="@drawable/sym_keyboard_delete" 
                 android:keyWidth="19%p" android:keyEdgeFlags="right"
                 android:isRepeatable="true"/>
     </Row>
@@ -30,17 +31,20 @@
         <Key android:codes="90,38,88,58,81" android:keyLabel="QZX"/>
         <Key android:codes="86,42,66,34,67" android:keyLabel="CVB"/>
         <Key android:codes="77,40,77,63,78" android:keyLabel="NM"/>
-        <Key android:codes="-1,-1,-1,-1,-1" android:keyIcon="@drawable/sym_keyboard_shift" 
-                android:keyWidth="19%p" android:isModifier="true"
-                android:isSticky="true" android:keyEdgeFlags="right"/>
+        <Key android:codes="-1,-1,-1,-1,-1"
+                android:keyIcon="@drawable/sym_keyboard_shift" 
+                android:keyWidth="19%p"
+                android:keyEdgeFlags="right"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">
         <Key android:codes="44,58,34,59,39" android:keyLabel="',&quot;"/>
-        <Key android:codes="32,41,32,32,32" android:keyIcon="@drawable/sym_keyboard_space" 
+        <Key android:codes="32,41,32,32,32"
+                android:keyIcon="@drawable/sym_keyboard_space" 
                 android:isRepeatable="true"/>
         <Key android:codes="46,64,63,35,33" android:keyLabel="!.?"/>
-        <Key android:codes="10,10,10,10,10" android:keyIcon="@drawable/sym_keyboard_return" 
+        <Key android:codes="10,10,10,10,10"
+                android:keyIcon="@drawable/sym_keyboard_return" 
                 android:keyWidth="20%p" android:keyEdgeFlags="right"/>
     </Row>
     

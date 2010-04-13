@@ -33,8 +33,8 @@
         <Key android:codes="109,57,109,47,110" android:keyLabel="nm"/>
         <Key android:codes="-1,-1,-1,-1,-1"
                 android:keyIcon="@drawable/sym_keyboard_shift" 
-                android:keyWidth="19%p" android:isModifier="true"
-                android:isSticky="true" android:keyEdgeFlags="right"/>
+                android:keyWidth="19%p"
+                android:keyEdgeFlags="right"/>
     </Row>
     
     <Row android:rowEdgeFlags="bottom">

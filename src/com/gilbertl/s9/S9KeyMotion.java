@@ -13,15 +13,13 @@ public abstract class S9KeyMotion {
 	public static int DOWN = 3;
 	public static int LEFT = 4;
 	
-	public static int calculate(PointF start, PointF end, float radius) {
-		Log.i(TAG, "distance between start and end: " +distance(start, end));
-		
-		if (distance(start, end) < radius) {
-			return MIDDLE;
-		}
-		
+	public static int calculate(PointF start, PointF end, float radius) {		
 		// if start was at (0,0), end would be...
 		PointF relativeEnd = new PointF(end.x - start.x, end.y - start.y);
+		
+		if (relativeEnd.length() < radius) {
+			return MIDDLE;
+		}
 		
 		if (relativeEnd.y >= relativeEnd.x) {
 			// either UP or LEFT
@@ -38,11 +36,4 @@ public abstract class S9KeyMotion {
 			}
 		}
 	}
-	
-	private static double distance(PointF from, PointF to) {
-		float xDiff = to.x - from.x;
-		float yDiff = to.y - from.y;
-		return Math.sqrt(xDiff * xDiff + yDiff * yDiff);	
-	}
-
 }
