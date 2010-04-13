@@ -113,7 +113,7 @@ public class S9InputMethodService extends InputMethodService
     	
         mInputView = (KeyboardView) getLayoutInflater().inflate(
                 R.layout.input, null);
-        mInputView.setPreviewEnabled(false);
+        //mInputView.setPreviewEnabled(false);
         mInputView.setOnKeyboardActionListener(this);
         mInputView.setOnTouchListener(this);
         mInputView.setKeyboard(mDefaultKeyboard);

@@ -13,7 +13,8 @@
         <Key android:codes="89,64,85,95,84" android:keyLabel="TYU"/>
         <Key android:codes="79,35,80,43,73" android:keyLabel="IOP"/>
         <Key android:codes="-5,-5,-5,-5,-5"
-                android:keyIcon="@drawable/sym_keyboard_delete" 
+                android:keyIcon="@drawable/sym_keyboard_delete"
+                android:iconPreview="@drawable/sym_keyboard_preview_delete" 
                 android:keyWidth="19%p" android:keyEdgeFlags="right"
                 android:isRepeatable="true"/>
     </Row>
@@ -44,7 +45,8 @@
                 android:isRepeatable="true"/>
         <Key android:codes="46,64,63,35,33" android:keyLabel="!.?"/>
         <Key android:codes="10,10,10,10,10"
-                android:keyIcon="@drawable/sym_keyboard_return" 
+                android:keyIcon="@drawable/sym_keyboard_return"
+                android:iconPreview="@drawable/sym_keyboard_preview_return" 
                 android:keyWidth="20%p" android:keyEdgeFlags="right"/>
     </Row>
     
