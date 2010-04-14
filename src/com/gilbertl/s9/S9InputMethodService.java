@@ -19,6 +19,7 @@ package com.gilbertl.s9;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
@@ -50,6 +51,9 @@ public class S9InputMethodService extends InputMethodService
      * that are primarily intended to be used for on-screen text entry.
      */
     static final boolean PROCESS_HARD_KEYS = true;
+    
+    private static final int REPEAT_START_DELAY = 400;
+    private static final int REPEAT_INTERVAL = 50;
     
     private KeyboardView mInputView;
     private CandidateView mCandidateView;
@@ -659,6 +663,7 @@ public class S9InputMethodService extends InputMethodService
 			return false;
 		}
 		
+		S9KeyMotion s9km;
 		switch (actionCode) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_POINTER_DOWN:
@@ -669,18 +674,27 @@ public class S9InputMethodService extends InputMethodService
 					new PointF(event.getX(pointerIdx), event.getY(pointerIdx));
 				Key keyPressed = findKey(downPoint);
 				if (keyPressed != null) {
-		    		Log.i(TAG, "Swipe on key: "
-		    				+ (char) keyPressed.codes[0]);
-					mS9KeyMotions[pointerId] = 
-						new S9KeyMotion(downPoint, keyPressed);
+		    		Log.i(TAG, "Swipe on key: " + (char) keyPressed.codes[0]);
+		    		s9km = new S9KeyMotion(downPoint, keyPressed);
+		    		mS9KeyMotions[pointerId] = s9km;
+		    		if (s9km.getKey().repeatable) {
+		    			Log.d(TAG, "Setting up timer.");
+		    			Timer t = new Timer();
+		    			t.scheduleAtFixedRate(
+		    				new HandleKeyTimerTask(
+		    					keyPressed.codes[S9KeyMotion.MIDDLE]),
+		    				REPEAT_START_DELAY, REPEAT_INTERVAL);
+		    			s9km.setTimer(t);
+		    		}
 					return true;
 				}
 				break;
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
 				Log.i(TAG, String.format("Point %d got released", pointerId));
-				S9KeyMotion s9km = mS9KeyMotions[pointerId];
+				s9km = mS9KeyMotions[pointerId];
 				assert s9km != null;
+				s9km.stopRepeat();
 				PointF upPoint = new PointF(
 						event.getX(pointerIdx), event.getY(pointerIdx));
 				int motion = s9km.calcMotion(upPoint);
@@ -737,5 +751,20 @@ public class S9InputMethodService extends InputMethodService
         } else {
             handleCharacter(code);
         }
+	}
+	
+	private class HandleKeyTimerTask extends TimerTask {
+		private final int mKeyToHandle;
+		
+		public HandleKeyTimerTask(int keyToHandle) {
+			super();
+			mKeyToHandle = keyToHandle;
+		}
+		
+		public void run() {
+			Log.d(TAG, "timer being run");
+			handleKey(mKeyToHandle);
+		}
+		
 	}
 }

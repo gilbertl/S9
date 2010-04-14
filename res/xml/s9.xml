@@ -63,10 +63,9 @@
         <Key android:codes="44,58,34,59,39"
                 android:keyIcon="@drawable/sym_keyboard_s9_10"
                 android:iconPreview="@drawable/sym_keyboard_preview_s9_10"/>
-        <Key android:codes="32,32,32,32,32"
+        <Key android:codes="32,48,32,32,32"
                 android:keyIcon="@drawable/sym_keyboard_s9_11"
-                android:iconPreview="@drawable/sym_keyboard_preview_s9_11"
-                android:isRepeatable="true"/>
+                android:iconPreview="@drawable/sym_keyboard_preview_s9_11"/>
         <Key android:codes="46,64,63,35,33"
                 android:keyIcon="@drawable/sym_keyboard_s9_12"
                 android:iconPreview="@drawable/sym_keyboard_preview_s9_12"/>
