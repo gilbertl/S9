@@ -18,6 +18,7 @@ package com.gilbertl.s9;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
 
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
@@ -67,8 +68,7 @@ public class S9InputMethodService extends InputMethodService
     
     private String mWordSeparators;
     
-	// down actions indexed by motion event pointer ids
-	private PointF[] mDownPoints;
+    private S9KeyMotion[] mS9KeyMotions;
     
     /**
      * Main initialization of the input method component.  Be sure to call
@@ -104,12 +104,8 @@ public class S9InputMethodService extends InputMethodService
      * a configuration change.
      */
     @Override public View onCreateInputView() {
-    	mDownPoints = new PointF[10];
-    	// if someone manages to put more than 10 fingers on an Android device
-    	// then they deserve to get some crazy force quit message
-    	for (int i = 0; i < mDownPoints.length; i++) {
-    		mDownPoints[i] = new PointF(-1, -1);
-    	}
+    	final int maxMultiTouchEvents = 256;
+    	mS9KeyMotions = new S9KeyMotion[maxMultiTouchEvents];
     	
         mInputView = (KeyboardView) getLayoutInflater().inflate(
                 R.layout.input, null);
@@ -566,7 +562,7 @@ public class S9InputMethodService extends InputMethodService
     }
     
     private void handleCharacter(int primaryCode) {
-        if (isAlphabet(primaryCode) && mPredictionOn) {
+        if (mPredictionOn) {
             mComposing.append((char) primaryCode);
             getCurrentInputConnection().setComposingText(mComposing, 1);
             updateCandidates();
@@ -663,46 +659,52 @@ public class S9InputMethodService extends InputMethodService
 			return false;
 		}
 		
-		PointF downPoint = mDownPoints[pointerId];
 		switch (actionCode) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_POINTER_DOWN:
 				Log.i(TAG,
 						String.format("Point %d got pressed down", pointerId));
-				assert downPoint.x == -1 && downPoint.y == -1;
-				downPoint.set(event.getX(pointerIdx), event.getY(pointerIdx));
-				return true;
+				assert mS9KeyMotions[pointerId] == null;
+				PointF downPoint =
+					new PointF(event.getX(pointerIdx), event.getY(pointerIdx));
+				Key keyPressed = findKey(downPoint);
+				if (keyPressed != null) {
+		    		Log.i(TAG, "Swipe on key: "
+		    				+ (char) keyPressed.codes[0]);
+					mS9KeyMotions[pointerId] = 
+						new S9KeyMotion(downPoint, keyPressed);
+					return true;
+				}
+				break;
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
 				Log.i(TAG, String.format("Point %d got released", pointerId));
-				assert downPoint.x >= 0 && downPoint.y >= 0;
+				S9KeyMotion s9km = mS9KeyMotions[pointerId];
+				assert s9km != null;
 				PointF upPoint = new PointF(
 						event.getX(pointerIdx), event.getY(pointerIdx));
-	    		Key keyPressed = getKey(downPoint.x, downPoint.y);
-	    		if (keyPressed != null) {
-	    			float threshold = 10.0f;
-		    		Log.i(TAG, "Swipe on key: " + (char) keyPressed.codes[0]);
-		    		int motion =
-		    			S9KeyMotion.calculate(downPoint, upPoint, threshold);
-		    		Log.i(TAG,
-		    			"Sending key: " + (char) keyPressed.codes[motion]);
-		    		handleKey(keyPressed.codes[motion]);
-	    		}
-	    		downPoint.set(-1,-1);
+				int motion = s9km.calcMotion(upPoint);
+				int code = s9km.getKey().codes[motion];
+	    		Log.i(TAG,
+	    			"Sending key: " + (char) code);
+	    		handleKey(code);
+				mS9KeyMotions[pointerId] = null;
 	    		return true;
 			default:
-				return false;
+				break;
 		}
+		
+		return false;
 	}
 	
-	private Key getKey(float x, float y) {
+	private Key findKey(PointF pt) {
 		int [] nearbyKeyIndices =
-			mCurKeyboard.getNearestKeys((int) x, (int) y);
+			mCurKeyboard.getNearestKeys((int) pt.x, (int) pt.y);
 		int l = nearbyKeyIndices.length;
 		List<Key> keys = mCurKeyboard.getKeys();
 		for (int i = 0; i < l; i++) {
 			Key key = keys.get(nearbyKeyIndices[i]);
-			if (key.isInside((int) x, (int) y)) {
+			if (key.isInside((int) pt.x, (int) pt.y)) {
 				return key;
 			}
 		}		
@@ -712,6 +714,7 @@ public class S9InputMethodService extends InputMethodService
 	private void handleKey(int code) {
         if (isWordSeparator(code)) {
             // Handle separator
+        	Log.d(TAG, "handling word seperator");
             if (mComposing.length() > 0) {
                 commitTyped(getCurrentInputConnection());
             }

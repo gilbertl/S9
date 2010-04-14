@@ -1,39 +1,58 @@
 package com.gilbertl.s9;
 
+import java.util.List;
+
 import android.graphics.PointF;
+import android.inputmethodservice.Keyboard;
+import android.inputmethodservice.Keyboard.Key;
 import android.util.Log;
 
-public abstract class S9KeyMotion {
+public class S9KeyMotion {
 	
 	public static String TAG = "S9KeyMotion";
 	
-	public static int MIDDLE = 0;
-	public static int UP = 1;
-	public static int RIGHT = 2;
-	public static int DOWN = 3;
-	public static int LEFT = 4;
+	public static final int MIDDLE = 0;
+	public static final int UP = 1;
+	public static final int RIGHT = 2;
+	public static final int DOWN = 3;
+	public static final int LEFT = 4;
 	
-	public static int calculate(PointF start, PointF end, float radius) {		
+	private static final float RADIUS = 10.0f;
+	
+	private PointF mDownPoint;
+	private Keyboard.Key mKey;
+	
+	public S9KeyMotion(PointF downPoint, Keyboard.Key key) {
+		mDownPoint = downPoint;
+		mKey = key;
+	}
+
+	public int calcMotion(PointF upPoint) {		
 		// if start was at (0,0), end would be...
-		PointF relativeEnd = new PointF(end.x - start.x, end.y - start.y);
+		PointF relUpPoint =
+			new PointF(upPoint.x - mDownPoint.x, upPoint.y - mDownPoint.y);
 		
-		if (relativeEnd.length() < radius) {
+		if (relUpPoint.length() < RADIUS) {
 			return MIDDLE;
 		}
 		
-		if (relativeEnd.y >= relativeEnd.x) {
+		if (relUpPoint.y >= relUpPoint.x) {
 			// either UP or LEFT
-			if (relativeEnd.y >= -relativeEnd.x) {
+			if (relUpPoint.y >= -relUpPoint.x) {
 				return DOWN;
 			} else {
 				return LEFT;
 			}
 		} else {
-			if (-relativeEnd.y >= relativeEnd.x) {
+			if (-relUpPoint.y >= relUpPoint.x) {
 				return UP;
 			} else {
 				return RIGHT;
 			}
 		}
+	}
+	
+	public Key getKey() {
+		return mKey;
 	}
 }
