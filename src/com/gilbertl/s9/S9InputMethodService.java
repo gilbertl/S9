@@ -678,14 +678,7 @@ public class S9InputMethodService extends InputMethodService
 				assert downPoint.x >= 0 && downPoint.y >= 0;
 				PointF upPoint = new PointF(
 						event.getX(pointerIdx), event.getY(pointerIdx));
-				
-	    		Key keyPressed = null;
-	    		for (Key key : mCurKeyboard.getKeys()) {
-	    			if (key.isInside((int) downPoint.x, (int) downPoint.y)) {
-	    				keyPressed = key;
-	    				break;
-	    			}
-	    		}
+	    		Key keyPressed = getKey(downPoint.x, downPoint.y);
 	    		if (keyPressed != null) {
 	    			float threshold = 10.0f;
 		    		Log.i(TAG, "Swipe on key: " + (char) keyPressed.codes[0]);
@@ -700,6 +693,20 @@ public class S9InputMethodService extends InputMethodService
 			default:
 				return false;
 		}
+	}
+	
+	private Key getKey(float x, float y) {
+		int [] nearbyKeyIndices =
+			mCurKeyboard.getNearestKeys((int) x, (int) y);
+		int l = nearbyKeyIndices.length;
+		List<Key> keys = mCurKeyboard.getKeys();
+		for (int i = 0; i < l; i++) {
+			Key key = keys.get(nearbyKeyIndices[i]);
+			if (key.isInside((int) x, (int) y)) {
+				return key;
+			}
+		}		
+		return null;
 	}
 	
 	private void handleKey(int code) {
