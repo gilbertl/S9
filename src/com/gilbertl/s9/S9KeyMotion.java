@@ -1,12 +1,8 @@
 package com.gilbertl.s9;
 
-import java.util.List;
-import java.util.Timer;
-
 import android.graphics.PointF;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.Keyboard.Key;
-import android.util.Log;
 
 public class S9KeyMotion {
 	
@@ -22,7 +18,6 @@ public class S9KeyMotion {
 	
 	private PointF mDownPoint;
 	private Keyboard.Key mKey;
-	private Timer mTimer;
 	
 	public S9KeyMotion(PointF downPoint, Keyboard.Key key) {
 		mDownPoint = downPoint;
@@ -57,14 +52,5 @@ public class S9KeyMotion {
 	public Key getKey() {
 		return mKey;
 	}
-	
-	public void stopRepeat() {
-		if (mTimer != null) {
-			mTimer.cancel();
-		}
-	}
-	
-	public void setTimer(Timer timer) {
-		mTimer = timer;
-	}
+
 }

@@ -18,8 +18,6 @@ package com.gilbertl.s9;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
@@ -499,6 +497,7 @@ public class S9InputMethodService extends InputMethodService
     // Implementation of KeyboardViewListener
 
     public void onKey(int primaryCode, int[] keyCodes) {
+    	handleKey(primaryCode);
     }
 
     public void onText(CharSequence text) {
@@ -537,6 +536,7 @@ public class S9InputMethodService extends InputMethodService
         } else if (isExtractViewShown()) {
             setCandidatesViewShown(true);
         }
+        
         if (mCandidateView != null) {
             mCandidateView.setSuggestions(suggestions, completions, typedWordValid);
         }
@@ -614,13 +614,9 @@ public class S9InputMethodService extends InputMethodService
     }
     
     public void swipeRight() {
-        if (mCompletionOn) {
-            pickDefaultCandidate();
-        }
     }
     
     public void swipeLeft() {
-        handleBackspace();
     }
 
     public void swipeDown() {
@@ -678,13 +674,8 @@ public class S9InputMethodService extends InputMethodService
 		    		s9km = new S9KeyMotion(downPoint, keyPressed);
 		    		mS9KeyMotions[pointerId] = s9km;
 		    		if (s9km.getKey().repeatable) {
-		    			Log.d(TAG, "Setting up timer.");
-		    			Timer t = new Timer();
-		    			t.scheduleAtFixedRate(
-		    				new HandleKeyTimerTask(
-		    					keyPressed.codes[S9KeyMotion.MIDDLE]),
-		    				REPEAT_START_DELAY, REPEAT_INTERVAL);
-		    			s9km.setTimer(t);
+		    			// let KeyboardView handle repeatable keys
+		    			return false;
 		    		}
 					return true;
 				}
@@ -694,7 +685,11 @@ public class S9InputMethodService extends InputMethodService
 				Log.i(TAG, String.format("Point %d got released", pointerId));
 				s9km = mS9KeyMotions[pointerId];
 				assert s9km != null;
-				s9km.stopRepeat();
+				mS9KeyMotions[pointerId] = null;
+				if (s9km.getKey().repeatable) {
+	    			// let KeyboardView handle repeatable keys
+					return false;
+				}
 				PointF upPoint = new PointF(
 						event.getX(pointerIdx), event.getY(pointerIdx));
 				int motion = s9km.calcMotion(upPoint);
@@ -702,7 +697,6 @@ public class S9InputMethodService extends InputMethodService
 	    		Log.i(TAG,
 	    			"Sending key: " + (char) code);
 	    		handleKey(code);
-				mS9KeyMotions[pointerId] = null;
 	    		return true;
 			default:
 				break;
@@ -752,19 +746,5 @@ public class S9InputMethodService extends InputMethodService
             handleCharacter(code);
         }
 	}
-	
-	private class HandleKeyTimerTask extends TimerTask {
-		private final int mKeyToHandle;
-		
-		public HandleKeyTimerTask(int keyToHandle) {
-			super();
-			mKeyToHandle = keyToHandle;
-		}
-		
-		public void run() {
-			Log.d(TAG, "timer being run");
-			handleKey(mKeyToHandle);
-		}
-		
-	}
+
 }
