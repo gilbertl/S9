@@ -40,24 +40,13 @@ public class S9InputMethodService extends InputMethodService
 	static final String TAG = "S9InputMethodService";
     static final boolean DEBUG = false;
     
-    /**
-     * This boolean indicates the optional example code for performing
-     * processing of hard keys in addition to regular text generation
-     * from on-screen interaction.  It would be used for input methods that
-     * perform language translations (such as converting text entered on 
-     * a QWERTY keyboard to Chinese), but may not be used for input methods
-     * that are primarily intended to be used for on-screen text entry.
-     */
-    static final boolean PROCESS_HARD_KEYS = true;
-    
-    private static final int REPEAT_START_DELAY = 400;
-    private static final int REPEAT_INTERVAL = 50;
-    
     private KeyboardView mInputView;
     private CandidateView mCandidateView;
     private CompletionInfo[] mCompletions;
+    private Suggest mSuggest;
     
     private StringBuilder mComposing = new StringBuilder();
+    private WordComposer mWord = new WordComposer();
     private boolean mPredictionOn;
     private boolean mCompletionOn;
     private int mLastDisplayWidth;
@@ -78,7 +67,22 @@ public class S9InputMethodService extends InputMethodService
      */
     @Override public void onCreate() {
         super.onCreate();
+        initSuggest();
         mWordSeparators = getResources().getString(R.string.word_separators);
+    }
+    
+    private void initSuggest() {
+        mSuggest = new Suggest(this, R.raw.main);
+        /*
+        mSuggest.setCorrectionMode(mCorrectionMode);
+        mUserDictionary = new UserDictionary(this);
+        mContactsDictionary = new ContactsDictionary(this);
+        mAutoDictionary = new AutoDictionary(this);
+        mSuggest.setUserDictionary(mUserDictionary);
+        mSuggest.setContactsDictionary(mContactsDictionary);
+        mSuggest.setAutoDictionary(mAutoDictionary);
+        */
+        mSuggest.setCorrectionMode(Suggest.CORRECTION_FULL);
     }
     
     /**
@@ -140,6 +144,7 @@ public class S9InputMethodService extends InputMethodService
         // Reset our state.  We want to do this even if restarting, because
         // the underlying state of the text editor could have changed in any way.
         mComposing.setLength(0);
+        mWord.reset();
         updateCandidates();
         
         if (!restarting) {
@@ -223,6 +228,7 @@ public class S9InputMethodService extends InputMethodService
         
         // Clear current composing text and candidates.
         mComposing.setLength(0);
+        mWord.reset();
         updateCandidates();
         
         // We only hide the candidates window when finishing input on
@@ -361,34 +367,7 @@ public class S9InputMethodService extends InputMethodService
                 return false;
                 
             default:
-                // For all other keys, if we want to do transformations on
-                // text being entered with a hard keyboard, we need to process
-                // it and do the appropriate action.
-                if (PROCESS_HARD_KEYS) {
-                    if (keyCode == KeyEvent.KEYCODE_SPACE
-                            && (event.getMetaState()&KeyEvent.META_ALT_ON) != 0) {
-                        // A silly example: in our input method, Alt+Space
-                        // is a shortcut for 'android' in lower case.
-                        InputConnection ic = getCurrentInputConnection();
-                        if (ic != null) {
-                            // First, tell the editor that it is no longer in the
-                            // shift state, since we are consuming this.
-                            ic.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-                            keyDownUp(KeyEvent.KEYCODE_A);
-                            keyDownUp(KeyEvent.KEYCODE_N);
-                            keyDownUp(KeyEvent.KEYCODE_D);
-                            keyDownUp(KeyEvent.KEYCODE_R);
-                            keyDownUp(KeyEvent.KEYCODE_O);
-                            keyDownUp(KeyEvent.KEYCODE_I);
-                            keyDownUp(KeyEvent.KEYCODE_D);
-                            // And we consume this event.
-                            return true;
-                        }
-                    }
-                    if (mPredictionOn && translateKeyDown(keyCode, event)) {
-                        return true;
-                    }
-                }
+            	break;
         }
         
         return super.onKeyDown(keyCode, event);
@@ -400,16 +379,6 @@ public class S9InputMethodService extends InputMethodService
      * continue to the app.
      */
     @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
-        // If we want to do transformations on text being entered with a hard
-        // keyboard, we need to process the up events to update the meta key
-        // state we are tracking.
-        if (PROCESS_HARD_KEYS) {
-            if (mPredictionOn) {
-                mMetaState = MetaKeyKeyListener.handleKeyUp(mMetaState,
-                        keyCode, event);
-            }
-        }
-        
         return super.onKeyUp(keyCode, event);
     }
 
@@ -420,6 +389,7 @@ public class S9InputMethodService extends InputMethodService
         if (mComposing.length() > 0) {
             inputConnection.commitText(mComposing, mComposing.length());
             mComposing.setLength(0);
+            mWord.reset();
             updateCandidates();
         }
     }
@@ -520,9 +490,16 @@ public class S9InputMethodService extends InputMethodService
     private void updateCandidates() {
         if (!mCompletionOn) {
             if (mComposing.length() > 0) {
-                ArrayList<String> list = new ArrayList<String>();
-                list.add(mComposing.toString());
-                setSuggestions(list, true, true);
+            	Log.d(TAG, "getting suggestions");
+            	List<CharSequence> suggestions =
+            		mSuggest.getSuggestions(mInputView, mWord, true);
+            	List<String> suggestionStrs =
+            		new ArrayList<String>(suggestions.size());
+            	for (CharSequence cs : suggestions) {
+            		suggestionStrs.add(cs.toString());
+            	}
+                
+                setSuggestions(suggestionStrs, true, true);
             } else {
                 setSuggestions(null, false, false);
             }
@@ -546,10 +523,12 @@ public class S9InputMethodService extends InputMethodService
         final int length = mComposing.length();
         if (length > 1) {
             mComposing.delete(length - 1, length);
+            mWord.deleteLast();
             getCurrentInputConnection().setComposingText(mComposing, 1);
             updateCandidates();
         } else if (length > 0) {
             mComposing.setLength(0);
+            mWord.reset();
             getCurrentInputConnection().commitText("", 0);
             updateCandidates();
         } else {
@@ -568,6 +547,8 @@ public class S9InputMethodService extends InputMethodService
     private void handleCharacter(int primaryCode) {
         if (mPredictionOn) {
             mComposing.append((char) primaryCode);
+            int [] adjCodes = {primaryCode};
+            mWord.add(primaryCode, adjCodes);
             getCurrentInputConnection().setComposingText(mComposing, 1);
             updateCandidates();
         } else {
