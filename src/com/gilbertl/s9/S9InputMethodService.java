@@ -73,6 +73,9 @@ public class S9InputMethodService extends InputMethodService
     }
     
     private void initSuggest() {
+    	// the reason the dict file is .png is we need to trick the android
+    	// into not compressing it. This is because we need to pass file
+    	// descriptor from Java to native, and this is the only way to do it
         mSuggest = new Suggest(this, R.raw.en_dict);
         /*
         mSuggest.setCorrectionMode(mCorrectionMode);
