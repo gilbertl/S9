@@ -15,7 +15,8 @@
 ** limitations under the License.
 */
 
-#define LOG_TAG "BinaryDictionary"
+#define TAG "NativeBinaryDictionary"
+#include <android/log.h>
 
 #include <jni.h>
 
@@ -54,7 +55,8 @@ static jint s9_BinaryDictionary_open
 
     unsigned char *dict = new unsigned char[length];
     if (dict == NULL) {
-        fprintf(stderr, "DICT: Failed to allocate dictionary buffer\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+            "DICT: Failed to allocate dictionary buffer");
         return 0;
     }
 
@@ -119,7 +121,7 @@ static void s9_BinaryDictionary_close
 // ----------------------------------------------------------------------------
 
 static JNINativeMethod gMethods[] = {
-    {"openNative",           "(LJava/io/FileDescriptior;JJII)I",
+    {"openNative",           "(Ljava/io/FileDescriptor;JJII)I",
                                           (void*)s9_BinaryDictionary_open},
     {"closeNative",          "(I)V",            (void*)s9_BinaryDictionary_close},
     {"getSuggestionsNative", "(I[II[C[IIIII)I",  (void*)s9_BinaryDictionary_getSuggestions},
@@ -133,12 +135,13 @@ static int registerNativeMethods(JNIEnv* env, const char* className,
 
     clazz = env->FindClass(className);
     if (clazz == NULL) {
-        fprintf(stderr,
-            "Native registration unable to find class '%s'\n", className);
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+            "Native registration unable to find class '%s'", className);
         return JNI_FALSE;
     }
     if (env->RegisterNatives(clazz, gMethods, numMethods) < 0) {
-        fprintf(stderr, "RegisterNatives failed for '%s'\n", className);
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+            "RegisterNatives failed for '%s'", className);
         return JNI_FALSE;
     }
 
@@ -152,7 +155,8 @@ static int registerNatives(JNIEnv *env)
 
     clazz = env->FindClass("java/io/FileDescriptor");
     if (clazz == NULL) {
-        fprintf(stderr, "Can't find %s", "java/io/FileDescriptor");
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+            "Can't find %s", "java/io/FileDescriptor");
         return -1;
     }
     sDescriptorField = env->GetFieldID(clazz, "descriptor", "I");
@@ -170,13 +174,15 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     jint result = -1;
 
     if (vm->GetEnv((void**) &env, JNI_VERSION_1_4) != JNI_OK) {
-        fprintf(stderr, "ERROR: GetEnv failed\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+            "ERROR: GetEnv failed");
         goto bail;
     }
     assert(env != NULL);
 
     if (!registerNatives(env)) {
-        fprintf(stderr, "ERROR: BinaryDictionary native registration failed\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG,
+            "ERROR: native registration failed");
         goto bail;
     }
 

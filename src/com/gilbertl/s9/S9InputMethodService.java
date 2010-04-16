@@ -17,6 +17,7 @@
 package com.gilbertl.s9;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import android.graphics.PointF;
@@ -72,7 +73,7 @@ public class S9InputMethodService extends InputMethodService
     }
     
     private void initSuggest() {
-        mSuggest = new Suggest(this, R.raw.main);
+        mSuggest = new Suggest(this, R.raw.en_dict);
         /*
         mSuggest.setCorrectionMode(mCorrectionMode);
         mUserDictionary = new UserDictionary(this);
@@ -490,9 +491,9 @@ public class S9InputMethodService extends InputMethodService
     private void updateCandidates() {
         if (!mCompletionOn) {
             if (mComposing.length() > 0) {
-            	Log.d(TAG, "getting suggestions");
             	List<CharSequence> suggestions =
             		mSuggest.getSuggestions(mInputView, mWord, true);
+            	Log.d(TAG, "got suggestions: " + suggestions);
             	List<String> suggestionStrs =
             		new ArrayList<String>(suggestions.size());
             	for (CharSequence cs : suggestions) {

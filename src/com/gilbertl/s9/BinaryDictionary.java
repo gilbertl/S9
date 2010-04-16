@@ -47,7 +47,7 @@ public class BinaryDictionary extends Dictionary {
         try {
             System.loadLibrary("s9");
         } catch (UnsatisfiedLinkError ule) {
-            Log.e(TAG, "Could not load native library jni_latinime");
+            Log.e(TAG, "Could not load native library s9");
         }
     }
 
