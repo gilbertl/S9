@@ -44,6 +44,7 @@ public class S9InputMethodService extends InputMethodService
     private KeyboardView mInputView;
     private CandidateView mCandidateView;
     private CompletionInfo[] mCompletions;
+    private List<String> mSuggestions;
     private Suggest mSuggest;
     
     private StringBuilder mComposing = new StringBuilder();
@@ -389,9 +390,17 @@ public class S9InputMethodService extends InputMethodService
     /**
      * Helper function to commit any text being composed in to the editor.
      */
-    private void commitTyped(InputConnection inputConnection) {
+    private void commitTyped(InputConnection inputConn) {
+    	commitText(inputConn, mComposing, mComposing.length());
+    }
+    
+    /**
+     * Commits a certain char sequence to editor.
+     */
+    private void commitText(
+    		InputConnection inputConn, CharSequence text, int textLength) {
         if (mComposing.length() > 0) {
-            inputConnection.commitText(mComposing, mComposing.length());
+            inputConn.commitText(text, textLength);
             mComposing.setLength(0);
             mWord.reset();
             updateCandidates();
@@ -462,7 +471,8 @@ public class S9InputMethodService extends InputMethodService
                 if (keyCode >= '0' && keyCode <= '9') {
                     keyDownUp(keyCode - '0' + KeyEvent.KEYCODE_0);
                 } else {
-                    getCurrentInputConnection().commitText(String.valueOf((char) keyCode), 1);
+                    getCurrentInputConnection()
+                    .commitText(String.valueOf((char) keyCode), 1);
                 }
                 break;
         }
@@ -479,7 +489,7 @@ public class S9InputMethodService extends InputMethodService
         if (ic == null) return;
         ic.beginBatchEdit();
         if (mComposing.length() > 0) {
-            commitTyped(ic);
+        	commitTyped(ic);
         }
         ic.commitText(text, 0);
         ic.endBatchEdit();
@@ -497,13 +507,12 @@ public class S9InputMethodService extends InputMethodService
             	List<CharSequence> suggestions =
             		mSuggest.getSuggestions(mInputView, mWord, true);
             	Log.d(TAG, "got suggestions: " + suggestions);
-            	List<String> suggestionStrs =
-            		new ArrayList<String>(suggestions.size());
+            	mSuggestions = new ArrayList<String>(suggestions.size());
             	for (CharSequence cs : suggestions) {
-            		suggestionStrs.add(cs.toString());
+            		mSuggestions.add(cs.toString());
             	}
                 
-                setSuggestions(suggestionStrs, true, true);
+                setSuggestions(mSuggestions, true, true);
             } else {
                 setSuggestions(null, false, false);
             }
@@ -531,10 +540,7 @@ public class S9InputMethodService extends InputMethodService
             getCurrentInputConnection().setComposingText(mComposing, 1);
             updateCandidates();
         } else if (length > 0) {
-            mComposing.setLength(0);
-            mWord.reset();
-            getCurrentInputConnection().commitText("", 0);
-            updateCandidates();
+            commitText(getCurrentInputConnection(), "", 0);
         } else {
             keyDownUp(KeyEvent.KEYCODE_DEL);
         }
@@ -563,7 +569,7 @@ public class S9InputMethodService extends InputMethodService
     }
 
     private void handleClose() {
-        commitTyped(getCurrentInputConnection());
+    	commitTyped(getCurrentInputConnection());
         requestHideSelf(0);
         mInputView.closing();
     }
@@ -591,10 +597,12 @@ public class S9InputMethodService extends InputMethodService
             }
             updateShiftKeyState(getCurrentInputEditorInfo());
         } else if (mComposing.length() > 0) {
+        	Log.d(TAG, "picked index " + index);
             // If we were generating candidate suggestions for the current
             // text, we would commit one of them here.  But for this sample,
             // we will just commit the current text.
-            commitTyped(getCurrentInputConnection());
+        	String s = mSuggestions.get(index);
+        	commitText(getCurrentInputConnection(), s, s.length());
         }
     }
     
