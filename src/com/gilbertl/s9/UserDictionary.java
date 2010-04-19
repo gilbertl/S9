@@ -16,8 +16,6 @@
 
 package com.gilbertl.s9;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import android.content.ContentResolver;

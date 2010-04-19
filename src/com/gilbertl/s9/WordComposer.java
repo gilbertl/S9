@@ -17,7 +17,6 @@
 package com.gilbertl.s9;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A place to store the currently composing word with information such as adjacent key codes as well

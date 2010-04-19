@@ -17,7 +17,6 @@
 package com.gilbertl.s9;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import android.graphics.PointF;
@@ -25,9 +24,7 @@ import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.inputmethodservice.Keyboard.Key;
-import android.text.method.MetaKeyKeyListener;
 import android.util.Log;
-import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -302,43 +299,6 @@ public class S9InputMethodService extends InputMethodService
     }
     
     /**
-     * This translates incoming hard key events in to edit operations on an
-     * InputConnection.  It is only needed when using the
-     * PROCESS_HARD_KEYS option.
-     */
-    private boolean translateKeyDown(int keyCode, KeyEvent event) {
-        mMetaState = MetaKeyKeyListener.handleKeyDown(mMetaState,
-                keyCode, event);
-        int c = event.getUnicodeChar(MetaKeyKeyListener.getMetaState(mMetaState));
-        mMetaState = MetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
-        InputConnection ic = getCurrentInputConnection();
-        if (c == 0 || ic == null) {
-            return false;
-        }
-        
-        boolean dead = false;
-
-        if ((c & KeyCharacterMap.COMBINING_ACCENT) != 0) {
-            dead = true;
-            c = c & KeyCharacterMap.COMBINING_ACCENT_MASK;
-        }
-        
-        if (mComposing.length() > 0) {
-            char accent = mComposing.charAt(mComposing.length() -1 );
-            int composed = KeyEvent.getDeadChar(accent, c);
-
-            if (composed != 0) {
-                c = composed;
-                mComposing.setLength(mComposing.length()-1);
-            }
-        }
-        
-        onKey(c, null);
-        
-        return true;
-    }
-    
-    /**
      * Use this to monitor key events being delivered to the application.
      * We get first crack at them, and can either resume them or let them
      * continue to the app.
@@ -412,7 +372,6 @@ public class S9InputMethodService extends InputMethodService
      * editor state.
      */
     private void updateShiftKeyState(EditorInfo attr) {
-    	Log.i(TAG, "called updateShiftKeyState");
         if (attr != null 
                 && mInputView != null && mCurKeyboard == mInputView.getKeyboard()) {
             int caps = 0;
@@ -421,6 +380,7 @@ public class S9InputMethodService extends InputMethodService
                 caps = getCurrentInputConnection().getCursorCapsMode(attr.inputType);
             }
             useShiftedKeyboard(caps != 0);
+
         }
     }
     
@@ -435,18 +395,11 @@ public class S9InputMethodService extends InputMethodService
     }
     
     private void toggleKeyboard() {
-    	useShiftedKeyboard(mCurKeyboard == mDefaultKeyboard);
+    	useShiftedKeyboard(!isShifted());
     }
     
-    /**
-     * Helper to determine if a given character code is alphabetic.
-     */
-    private boolean isAlphabet(int code) {
-        if (Character.isLetter(code)) {
-            return true;
-        } else {
-            return false;
-        }
+    private boolean isShifted() {
+    	return mCurKeyboard == mShiftedKeyboard;
     }
     
     /**
@@ -505,14 +458,18 @@ public class S9InputMethodService extends InputMethodService
         if (!mCompletionOn) {
             if (mComposing.length() > 0) {
             	List<CharSequence> suggestions =
-            		mSuggest.getSuggestions(mInputView, mWord, true);
+            		mSuggest.getSuggestions(mInputView, mWord, false);
             	Log.d(TAG, "got suggestions: " + suggestions);
             	mSuggestions = new ArrayList<String>(suggestions.size());
             	for (CharSequence cs : suggestions) {
             		mSuggestions.add(cs.toString());
             	}
+            	
+            	boolean typedWordValid = mSuggest.isValidWord(mComposing) ||
+                 (mWord.isCapitalized() &&
+                	mSuggest.isValidWord(mComposing.toString().toLowerCase()));
                 
-                setSuggestions(mSuggestions, true, true);
+                setSuggestions(mSuggestions, true, typedWordValid);
             } else {
                 setSuggestions(null, false, false);
             }
@@ -528,7 +485,8 @@ public class S9InputMethodService extends InputMethodService
         }
         
         if (mCandidateView != null) {
-            mCandidateView.setSuggestions(suggestions, completions, typedWordValid);
+            mCandidateView.setSuggestions(
+            		suggestions, completions, typedWordValid);
         }
     }
     
@@ -556,9 +514,15 @@ public class S9InputMethodService extends InputMethodService
     
     private void handleCharacter(int primaryCode) {
         if (mPredictionOn) {
+            if (isShifted() && mComposing.length() == 0) {
+            	mWord.setCapitalized(true);
+                int [] adjCodes = {primaryCode, Character.toLowerCase(primaryCode)};
+        		mWord.add(Character.toLowerCase(primaryCode), adjCodes);
+            } else {
+                int [] adjCodes = {primaryCode};
+            	mWord.add(primaryCode, adjCodes);
+            }
             mComposing.append((char) primaryCode);
-            int [] adjCodes = {primaryCode};
-            mWord.add(primaryCode, adjCodes);
             getCurrentInputConnection().setComposingText(mComposing, 1);
             updateCandidates();
         } else {
@@ -597,11 +561,10 @@ public class S9InputMethodService extends InputMethodService
             }
             updateShiftKeyState(getCurrentInputEditorInfo());
         } else if (mComposing.length() > 0) {
-        	Log.d(TAG, "picked index " + index);
-            // If we were generating candidate suggestions for the current
-            // text, we would commit one of them here.  But for this sample,
-            // we will just commit the current text.
         	String s = mSuggestions.get(index);
+        	if (mWord.isCapitalized()) {
+        		s = s.substring(0, 1).toUpperCase() + s.substring(1);
+        	}
         	commitText(getCurrentInputConnection(), s, s.length());
         }
     }
