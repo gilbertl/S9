@@ -656,40 +656,33 @@ public class S9InputMethodService extends InputMethodService
 		switch (actionCode) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_POINTER_DOWN:
-				Log.i(TAG,
-						String.format("Point %d got pressed down", pointerId));
 				assert mS9KeyMotions[pointerId] == null;
 				PointF downPoint =
 					new PointF(event.getX(pointerIdx), event.getY(pointerIdx));
 				Key keyPressed = findKey(downPoint);
-				if (keyPressed != null) {
-		    		Log.i(TAG, "Swipe on key: " + (char) keyPressed.codes[0]);
-		    		s9km = new S9KeyMotion(downPoint, keyPressed);
-		    		mS9KeyMotions[pointerId] = s9km;
-		    		if (s9km.getKey().repeatable) {
-		    			// let KeyboardView handle repeatable keys
-		    			return false;
-		    		}
-					return true;
-				}
-				break;
+		    	s9km = new S9KeyMotion(downPoint, keyPressed);
+	    		mS9KeyMotions[pointerId] = s9km;
+	    		if (keyPressed != null && keyPressed.repeatable) {
+	    			// let KeyboardView handle repeatable keys
+	    			return false;
+	    		}
+				return true;
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
-				Log.i(TAG, String.format("Point %d got released", pointerId));
 				s9km = mS9KeyMotions[pointerId];
 				assert s9km != null;
 				mS9KeyMotions[pointerId] = null;
-				if (s9km.getKey().repeatable) {
-	    			// let KeyboardView handle repeatable keys
-					return false;
+				if (s9km.getKey() != null) {
+					if (s9km.getKey().repeatable) {
+		    			// let KeyboardView handle repeatable keys
+						return false;
+					}
+					PointF upPoint = new PointF(
+							event.getX(pointerIdx), event.getY(pointerIdx));
+					int motion = s9km.calcMotion(upPoint);
+					int code = s9km.getKey().codes[motion];
+		    		handleKey(code);
 				}
-				PointF upPoint = new PointF(
-						event.getX(pointerIdx), event.getY(pointerIdx));
-				int motion = s9km.calcMotion(upPoint);
-				int code = s9km.getKey().codes[motion];
-	    		Log.i(TAG,
-	    			"Sending key: " + (char) code);
-	    		handleKey(code);
 	    		return true;
 			default:
 				break;

@@ -35,7 +35,9 @@
         <Key android:codes="75,94,76,124,74"
                 android:keyIcon="@drawable/sym_keyboard_s9_06"
                 android:iconPreview="@drawable/sym_keyboard_preview_s9_06"/>
-        <Key android:codes="-999,-999,-999,-999,-999"  android:keyWidth="19%p"
+        <Key android:codes="-999,-999,-999,-999,-999"
+                android:keyLabel=" "
+                android:keyWidth="19%p"
                 android:keyEdgeFlags="right"/>
             
     </Row>
