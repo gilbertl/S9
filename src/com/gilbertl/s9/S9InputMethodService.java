@@ -17,8 +17,11 @@
 package com.gilbertl.s9;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
+import android.content.ComponentCallbacks;
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
@@ -434,7 +437,7 @@ public class S9InputMethodService extends InputMethodService
     // Implementation of KeyboardViewListener
 
     public void onKey(int primaryCode, int[] keyCodes) {
-    	handleKey(primaryCode);
+    	handleKey(primaryCode, keyCodes);
     }
 
     public void onText(CharSequence text) {
@@ -512,16 +515,11 @@ public class S9InputMethodService extends InputMethodService
         toggleKeyboard();
     }
     
-    private void handleCharacter(int primaryCode) {
+    private void handleCharacter(int primaryCode, int [] codes) {
         if (mPredictionOn) {
-            if (isShifted() && mComposing.length() == 0) {
-            	mWord.setCapitalized(true);
-                int [] adjCodes = {primaryCode, Character.toLowerCase(primaryCode)};
-        		mWord.add(Character.toLowerCase(primaryCode), adjCodes);
-            } else {
-                int [] adjCodes = {primaryCode};
-            	mWord.add(primaryCode, adjCodes);
-            }
+        	int [] adjCodes = buildAdjCodes(primaryCode, codes);
+        	mWord.setCapitalized(isShifted() && mComposing.length() == 0);
+            mWord.add(primaryCode, adjCodes);
             mComposing.append((char) primaryCode);
             getCurrentInputConnection().setComposingText(mComposing, 1);
             updateCandidates();
@@ -530,6 +528,38 @@ public class S9InputMethodService extends InputMethodService
                     String.valueOf((char) primaryCode), 1);
         }
         updateShiftKeyState(getCurrentInputEditorInfo());
+    }
+    
+    /*
+     * returns codes with primary code's opposite case included
+     * and order rearranged to reflect frequencies
+     */
+    private int [] buildAdjCodes(int primaryCode, int [] codes) {
+    	Character [] chars = new Character[codes.length];
+    	for (int i = 0; i < chars.length; i++) {
+    		chars[i] = new Character((char) codes[i]);
+    	}
+    	Arrays.sort(chars, new LetterFrequencyComp());
+    	boolean isLetter = Character.isLetter(primaryCode);
+    	int [] adjCodes = new int[isLetter? codes.length + 1 : codes.length];
+    	adjCodes[0] = primaryCode;
+    	int oppositeCase =  Character.isUpperCase(primaryCode)?
+					Character.toLowerCase(primaryCode):
+					Character.toUpperCase(primaryCode);
+		int i = 1;
+    	if (isLetter) {
+    		adjCodes[i++] = oppositeCase;
+    	}
+    	for (Character c : chars) {
+    		int charVal = c.charValue();
+    		if (charVal != primaryCode && charVal != oppositeCase) {
+    			adjCodes[i++] = (int) c.charValue();
+    		}
+    	}
+    	Log.d(TAG, "codes before: " + Arrays.toString(codes));
+    	Log.d(TAG, "codes after: " + Arrays.toString(adjCodes));
+    	
+    	return adjCodes;
     }
 
     private void handleClose() {
@@ -644,7 +674,7 @@ public class S9InputMethodService extends InputMethodService
 							event.getX(pointerIdx), event.getY(pointerIdx));
 					int motion = s9km.calcMotion(upPoint);
 					int code = s9km.getKey().codes[motion];
-		    		handleKey(code);
+		    		handleKey(code, s9km.getKey().codes);
 				}
 	    		return true;
 			default:
@@ -668,31 +698,31 @@ public class S9InputMethodService extends InputMethodService
 		return null;
 	}
 	
-	private void handleKey(int code) {
-        if (isWordSeparator(code)) {
+	private void handleKey(int primaryCode, int [] codes) {
+        if (isWordSeparator(primaryCode)) {
             // Handle separator
         	Log.d(TAG, "handling word seperator");
             if (mComposing.length() > 0) {
                 commitTyped(getCurrentInputConnection());
             }
-            sendKey(code);
+            sendKey(primaryCode);
             updateShiftKeyState(getCurrentInputEditorInfo());
-        } else if (code == Keyboard.KEYCODE_DELETE) {
+        } else if (primaryCode == Keyboard.KEYCODE_DELETE) {
             handleBackspace();
-        } else if (code == Keyboard.KEYCODE_SHIFT) {
+        } else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
             handleShift();
-        } else if (code == Keyboard.KEYCODE_CANCEL) {
+        } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
             handleClose();
             return;
-        } else if (code == S9KeyboardView.KEYCODE_OPTIONS) {
+        } else if (primaryCode == S9KeyboardView.KEYCODE_OPTIONS) {
             // Show a menu or somethin'
-        } else if (code == Keyboard.KEYCODE_MODE_CHANGE
+        } else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE
                 && mInputView != null) {
         	assert false;
-        } else if (code == S9Keyboard.KEYCODE_NULL) {
+        } else if (primaryCode == S9Keyboard.KEYCODE_NULL) {
         	// do nothing
         } else {
-            handleCharacter(code);
+            handleCharacter(primaryCode, codes);
         }
 	}
 
