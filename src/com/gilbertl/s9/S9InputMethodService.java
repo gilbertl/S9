@@ -47,8 +47,8 @@ public class S9InputMethodService extends InputMethodService
     
     private StringBuilder mComposing = new StringBuilder();
     private WordComposer mWord = new WordComposer();
-    private boolean mPredictionOn;
-    private boolean mCompletionOn;
+    private boolean mPredictionOn;		// prediction is from dictionaries
+    private boolean mCompletionOn;		// completion is from editor
     private int mLastDisplayWidth;
     private long mMetaState;
 
@@ -198,8 +198,6 @@ public class S9InputMethodService extends InputMethodService
                     // to supply their own.  We only show the editor's
                     // candidates when in fullscreen mode, otherwise relying
                     // own it displaying its own UI.
-                    //mPredictionOn = false;
-                	// it's nice to see what's being typed
                     mCompletionOn = isFullscreenMode();
                 }
                 
