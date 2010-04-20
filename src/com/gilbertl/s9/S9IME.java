@@ -33,7 +33,7 @@ import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
-public class S9InputMethodService extends InputMethodService 
+public class S9IME extends InputMethodService 
         implements KeyboardView.OnKeyboardActionListener, View.OnTouchListener {
 	
 	static final String TAG = "S9InputMethodService";
@@ -57,6 +57,9 @@ public class S9InputMethodService extends InputMethodService
     
     private S9Keyboard mCurKeyboard;
     
+    private UserDictionary mUserDictionary;
+    private ContactsDictionary mContactsDictionary;
+    
     private String mWordSeparators;
     
     private S9KeyMotion[] mS9KeyMotions;
@@ -76,16 +79,23 @@ public class S9InputMethodService extends InputMethodService
     	// into not compressing it. This is because we need to pass file
     	// descriptor from Java to native, and this is the only way to do it
         mSuggest = new Suggest(this, R.raw.en_dict);
-        /*
-        mSuggest.setCorrectionMode(mCorrectionMode);
+        
         mUserDictionary = new UserDictionary(this);
-        mContactsDictionary = new ContactsDictionary(this);
-        mAutoDictionary = new AutoDictionary(this);
+		mContactsDictionary = new ContactsDictionary(this);
         mSuggest.setUserDictionary(mUserDictionary);
         mSuggest.setContactsDictionary(mContactsDictionary);
+        /*
+        mAutoDictionary = new AutoDictionary(this);
         mSuggest.setAutoDictionary(mAutoDictionary);
         */
         mSuggest.setCorrectionMode(Suggest.CORRECTION_FULL);
+    }
+    
+    @Override
+    public void onDestroy() {
+    	mUserDictionary.close();
+    	mContactsDictionary.close();
+    	super.onDestroy();
     }
     
     /**

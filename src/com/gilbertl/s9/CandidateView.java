@@ -19,7 +19,7 @@ public class CandidateView extends View {
 
     private static final int OUT_OF_BOUNDS = -1;
 
-    private S9InputMethodService mService;
+    private S9IME mService;
     private List<String> mSuggestions;
     private int mSelectedIndex;
     private int mTouchX = OUT_OF_BOUNDS;
@@ -110,7 +110,7 @@ public class CandidateView extends View {
      * A connection back to the service to communicate with the text field
      * @param listener
      */
-    public void setService(S9InputMethodService listener) {
+    public void setService(S9IME listener) {
         mService = listener;
     }
     
