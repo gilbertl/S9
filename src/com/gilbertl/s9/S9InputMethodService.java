@@ -18,10 +18,8 @@ package com.gilbertl.s9;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
-import android.content.ComponentCallbacks;
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;

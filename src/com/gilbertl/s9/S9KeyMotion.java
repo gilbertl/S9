@@ -33,15 +33,20 @@ public class S9KeyMotion {
 			return MIDDLE;
 		}
 		
-		if (relUpPoint.y >= relUpPoint.x) {
+		final int LATERAL_BIAS = 2;
+		// we could divide the regions evenly with the lines y = x and y = -x
+		// however, since letters are much more likely then symbols, 
+		// we divide our regions with y = LATERAL_BIAS * x instead
+		
+		if (relUpPoint.y >= relUpPoint.x * LATERAL_BIAS) {
 			// either UP or LEFT
-			if (relUpPoint.y >= -relUpPoint.x) {
+			if (relUpPoint.y >= -relUpPoint.x * LATERAL_BIAS) {
 				return DOWN;
 			} else {
 				return LEFT;
 			}
 		} else {
-			if (-relUpPoint.y >= relUpPoint.x) {
+			if (-relUpPoint.y >= relUpPoint.x * LATERAL_BIAS) {
 				return UP;
 			} else {
 				return RIGHT;
