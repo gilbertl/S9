@@ -9,9 +9,11 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.GestureDetector.SimpleOnGestureListener;
 
 public class CandidateView extends View {
 	
@@ -81,25 +83,7 @@ public class CandidateView extends View {
         mPaint.setTextSize(r.getDimensionPixelSize(R.dimen.candidate_font_height));
         mPaint.setStrokeWidth(0);
         
-        mGestureDetector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2,
-                    float distanceX, float distanceY) {
-                mScrolled = true;
-                int sx = getScrollX();
-                sx += distanceX;
-                if (sx < 0) {
-                    sx = 0;
-                }
-                if (sx + getWidth() > mTotalWidth) {                    
-                    sx -= distanceX;
-                }
-                mTargetScrollX = sx;
-                scrollTo(sx, getScrollY());
-                invalidate();
-                return true;
-            }
-        });
+        mGestureDetector = new GestureDetector(new MyGestureListener());
         setHorizontalFadingEdgeEnabled(true);
         setWillNotDraw(false);
         setHorizontalScrollBarEnabled(false);
@@ -246,48 +230,64 @@ public class CandidateView extends View {
     
     @Override
     public boolean onTouchEvent(MotionEvent me) {
-
-        if (mGestureDetector.onTouchEvent(me)) {
-            return true;
-        }
-
-        int action = me.getAction();
-        int x = (int) me.getX();
-        int y = (int) me.getY();
-        mTouchX = x;
-
-        switch (action) {
-        case MotionEvent.ACTION_DOWN:
+    	return mGestureDetector.onTouchEvent(me);
+    }
+    
+    private class MyGestureListener extends SimpleOnGestureListener {
+       	@Override
+    	public boolean onDown(MotionEvent e) {
+    		mTouchX = (int) e.getX();
             mScrolled = false;
             invalidate();
-            break;
-        case MotionEvent.ACTION_MOVE:
-            if (y <= 0) {
-                // Fling up!?
-                if (mSelectedIndex >= 0) {
-                    mService.pickSuggestionManually(mSelectedIndex);
-                    mSelectedIndex = -1;
-                }
+            
+            return true;
+    	}
+    	
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2,
+                float distanceX, float distanceY) {
+            mScrolled = true;
+            int sx = getScrollX();
+            sx += distanceX;
+            if (sx < 0) {
+                sx = 0;
             }
+            if (sx + getWidth() > mTotalWidth) {                    
+                sx -= distanceX;
+            }
+            mTargetScrollX = sx;
+            scrollTo(sx, getScrollY());
             invalidate();
-            break;
-        case MotionEvent.ACTION_UP:
-            if (!mScrolled) {
-                if (mSelectedIndex >= 0) {
-                    mService.pickSuggestionManually(mSelectedIndex);
-                }
+            return true;
+        }
+        
+        @Override
+        public void onLongPress(MotionEvent me) {
+        	if (!mScrolled && mSelectedIndex >= 0) {
+    			if (mService.deleteWordFromDictionary(mSelectedIndex)) {
+    				mSuggestions.remove(mSelectedIndex);
+    			}
+    			mSelectedIndex = -1;
+    			removeHighlight();
+    			requestLayout();
+        	}
+        }
+        
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent me) {
+            if (!mScrolled && mSelectedIndex >= 0) {
+                mService.pickSuggestionManually(mSelectedIndex);
             }
             mSelectedIndex = -1;
             removeHighlight();
             requestLayout();
-            break;
+        	return true;
         }
-        return true;
     }
     
     /**
-     * For flick through from keyboard, call this method with the x coordinate of the flick 
-     * gesture.
+     * For flick through from keyboard, call this method with the x coordinate
+     * of the flick gesture.
      * @param x
      */
     public void takeSuggestionAt(float x) {

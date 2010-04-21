@@ -90,6 +90,27 @@ public class UserDictionary extends ExpandableDictionary {
         // In case the above does a synchronous callback of the change observer
         mRequiresReload = false;
     }
+     
+    /**
+     * Persistently removes word from dictionary
+     * @param word
+     * @return true if word given was in the dictionary
+     */
+    public synchronized boolean deleteWord(String word) {
+    	if (mRequiresReload) {
+    		loadDictionary();
+    		mRequiresReload = false;
+    	}
+    	if (isValidWord(word)) {
+        	getContext().getContentResolver().delete(
+        			Words.CONTENT_URI, Words.WORD + "=?", new String[] { word });
+        	// this should trigger content observer above and reload dictionary
+        	// next time we do something
+        	return true;
+    	} else {
+    		return false;
+    	}
+    }
 
     @Override
     public synchronized void getWords(final WordComposer codes, final WordCallback callback) {

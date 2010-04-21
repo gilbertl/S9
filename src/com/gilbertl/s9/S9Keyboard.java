@@ -41,7 +41,7 @@ public class S9Keyboard extends Keyboard {
     protected Key createKeyFromXml(Resources res, Row parent, int x, int y, 
             XmlResourceParser parser) {
         Key key = new Key(res, parent, x, y, parser);
-        if (key.codes[0] == 10) {
+        if (key.codes[0] == (int) '\n') {
             mEnterKey = key;
         }
         return key;

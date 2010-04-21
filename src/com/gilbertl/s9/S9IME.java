@@ -598,11 +598,25 @@ public class S9IME extends InputMethodService
             updateShiftKeyState(getCurrentInputEditorInfo());
         } else if (mComposing.length() > 0) {
         	String s = mSuggestions.get(index);
+        	if (index == 0 && s.length() > 2 && !mSuggest.isValidWord(s)) {
+        		addWordToDictionary(s);
+        	}
         	if (mWord.isCapitalized()) {
         		s = s.substring(0, 1).toUpperCase() + s.substring(1);
         	}
         	commitText(getCurrentInputConnection(), s, s.length());
         }
+    }
+    
+    public boolean addWordToDictionary(String word) {
+    	// max "frequency" is 255
+    	// for now, we'll treat every user dictionary word equal
+    	mUserDictionary.addWord(word, 128);
+    	return true;
+    }
+    
+    public boolean deleteWordFromDictionary(int index) {
+    	return mUserDictionary.deleteWord(mSuggestions.get(index));
     }
     
     public void swipeRight() {
@@ -707,7 +721,6 @@ public class S9IME extends InputMethodService
 	private void handleKey(int primaryCode, int [] codes) {
         if (isWordSeparator(primaryCode)) {
             // Handle separator
-        	Log.d(TAG, "handling word seperator");
             if (mComposing.length() > 0) {
                 commitTyped(getCurrentInputConnection());
             }
