@@ -20,11 +20,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.inputmethodservice.Keyboard.Key;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -44,6 +46,8 @@ public class S9IME extends InputMethodService
     private CompletionInfo[] mCompletions;
     private List<String> mSuggestions;
     private Suggest mSuggest;
+    
+    private float mSwipeSensitivity;
     
     private StringBuilder mComposing = new StringBuilder();
     private WordComposer mWord = new WordComposer();
@@ -224,10 +228,19 @@ public class S9IME extends InputMethodService
                 updateShiftKeyState(attribute);
         }
         
+        loadSettings();
+        
         // Update the label on the enter key, depending on what the application
         // says it will do.
         mDefaultKeyboard.setImeOptions(getResources(), attribute.imeOptions);
         mShiftedKeyboard.setImeOptions(getResources(), attribute.imeOptions);
+    }
+        
+    private void loadSettings() {
+    	SharedPreferences sp = 
+    		PreferenceManager.getDefaultSharedPreferences(this);
+    	mSwipeSensitivity = Float.parseFloat(
+    		sp.getString(S9IMESettings.SWIPE_SENSITIVITY_KEY, "0.1"));
     }
 
     /**
@@ -673,7 +686,8 @@ public class S9IME extends InputMethodService
 				PointF downPoint =
 					new PointF(event.getX(pointerIdx), event.getY(pointerIdx));
 				Key keyPressed = findKey(downPoint);
-		    	s9km = new S9KeyMotion(downPoint, keyPressed);
+		    	s9km = new S9KeyMotion(
+		    			downPoint, keyPressed, mSwipeSensitivity);
 	    		mS9KeyMotions[pointerId] = s9km;
 	    		if (keyPressed != null && keyPressed.repeatable) {
 	    			// let KeyboardView handle repeatable keys

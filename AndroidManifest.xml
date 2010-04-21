@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" 
         package="com.gilbertl.s9">
+        
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
     <uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    
     <application android:label="@string/ime_name" android:debuggable="true">
         <service android:permission="android.permission.BIND_INPUT_METHOD" android:name="S9IME">
             <intent-filter>
@@ -10,5 +12,13 @@
             </intent-filter>
             <meta-data android:name="android.view.im" android:resource="@xml/method" />
         </service>
+            
+	    <activity android:name="S9IMESettings" android:label="@string/ime_settings">
+	        <intent-filter>
+	            <action android:name="android.intent.action.MAIN"/>
+	        </intent-filter>
+	    </activity>   
     </application>
+
+    
 </manifest>

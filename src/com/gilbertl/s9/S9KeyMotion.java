@@ -13,15 +13,16 @@ public class S9KeyMotion {
 	public static final int RIGHT = 2;
 	public static final int DOWN = 3;
 	public static final int LEFT = 4;
-	
-	private static final float RADIUS = 10.0f;
-	
+		
 	private PointF mDownPoint;
 	private Keyboard.Key mKey;
+	private float mRadius;
 	
-	public S9KeyMotion(PointF downPoint, Keyboard.Key key) {
+	public S9KeyMotion(
+			PointF downPoint, Keyboard.Key key, float swipeSensitivity) {
 		mDownPoint = downPoint;
 		mKey = key;
+		mRadius = 1 / swipeSensitivity;
 	}
 
 	public int calcMotion(PointF upPoint) {		
@@ -29,7 +30,7 @@ public class S9KeyMotion {
 		PointF relUpPoint =
 			new PointF(upPoint.x - mDownPoint.x, upPoint.y - mDownPoint.y);
 		
-		if (relUpPoint.length() < RADIUS) {
+		if (relUpPoint.length() < mRadius) {
 			return MIDDLE;
 		}
 		

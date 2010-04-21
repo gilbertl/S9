@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+        android:title="@string/ime_settings"
+        android:key="s9_settings">
+    
+    <EditTextPreference
+            android:key="swipe_sensitivity"
+            android:title="@string/swipe_sensitivity_settings"
+            android:persistent="true" />
+
+</PreferenceScreen>
