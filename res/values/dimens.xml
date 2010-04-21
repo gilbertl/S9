@@ -2,6 +2,6 @@
 
 <resources>
     <dimen name="key_height">60dip</dimen>
-    <dimen name="candidate_font_height">16sp</dimen>
+    <dimen name="candidate_font_height">18sp</dimen>
     <dimen name="candidate_vertical_padding">6sp</dimen>
 </resources>

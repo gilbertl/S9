@@ -37,6 +37,7 @@ public class CandidateView extends View {
     private int[] mWordX = new int[MAX_SUGGESTIONS];
 
     private static final int X_GAP = 10;
+    private static final int MIN_WIDTH = 60;
     
     private static final List<String> EMPTY_LIST = new ArrayList<String>();
 
@@ -151,7 +152,9 @@ public class CandidateView extends View {
         for (int i = 0; i < count; i++) {
             String suggestion = mSuggestions.get(i);
             float textWidth = paint.measureText(suggestion);
-            final int wordWidth = (int) textWidth + X_GAP * 2;
+            final int wordWidth = 
+            	Math.max(MIN_WIDTH, (int) textWidth + X_GAP * 2);
+            final int xPadding = (wordWidth - (int) textWidth) / 2;
 
             mWordX[i] = x;
             mWordWidth[i] = wordWidth;
@@ -173,7 +176,7 @@ public class CandidateView extends View {
                 } else if (i != 0) {
                     paint.setColor(mColorOther);
                 }
-                canvas.drawText(suggestion, x + X_GAP, y, paint);
+                canvas.drawText(suggestion, x + xPadding, y, paint);
                 paint.setColor(mColorOther); 
                 canvas.drawLine(x + wordWidth + 0.5f, bgPadding.top, 
                         x + wordWidth + 0.5f, height + 1, paint);
