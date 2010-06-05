@@ -4,6 +4,8 @@ S9 is an Android input method that utilizes swipe motions to distinguish differe
 ## State of Project ##
 I (Gilbert) have decided to stop working on this for a variety of reasons. I thought someone would be interested in picking it up or forking it, so I put it on GitHub.
 
+For a list of "things to do", see "wiki" and "issues."
+
 ## Demo ##
 Watch [here](http://www.youtube.com/watch?v=0d1Frz6l4OU "Demo")
 
