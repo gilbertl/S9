@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/552/trunk/project/dict_creation/conversion
+END
+SQLiteDictionaryConverter.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/538/trunk/project/dict_creation/conversion/SQLiteDictionaryConverter.java
+END
+SQLiteDictionaryConverter.class
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/538/trunk/project/dict_creation/conversion/SQLiteDictionaryConverter.class
+END
+sqlitejdbc-v056.jar
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/534/trunk/project/dict_creation/conversion/sqlitejdbc-v056.jar
+END
+SQLiteDictionaryConverter_Windows.bat
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/552/trunk/project/dict_creation/conversion/SQLiteDictionaryConverter_Windows.bat
+END
+SQLiteDictionaryConverter_Linux
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/542/trunk/project/dict_creation/conversion/SQLiteDictionaryConverter_Linux
+END

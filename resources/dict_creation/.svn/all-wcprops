@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/552/trunk/project/dict_creation
+END
+makedict_Windows.bat
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/552/trunk/project/dict_creation/makedict_Windows.bat
+END
+makedict_Linux
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/544/trunk/project/dict_creation/makedict_Linux
+END
+android_metadata_create.sql
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/157/trunk/project/dict_creation/android_metadata_create.sql
+END
+dict_table_create.sql
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/157/trunk/project/dict_creation/dict_table_create.sql
+END
+dict_metadata_table_create.sql
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/157/trunk/project/dict_creation/dict_metadata_table_create.sql
+END
+makedict.jar
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/532/trunk/project/dict_creation/makedict.jar
+END
